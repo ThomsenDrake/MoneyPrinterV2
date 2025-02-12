@@ -1,11 +1,18 @@
 import os
 import sys
 import json
+import shutil
 import srt_equalizer
-
+from dotenv import load_dotenv
 from termcolor import colored
 
 ROOT_DIR = os.path.dirname(sys.path[0])
+
+TTS_MODEL = os.getenv('TTS_MODEL', 'tts_models/en/ljspeech/vits')
+TTS_USE_CUDA = os.getenv('TTS_USE_CUDA', 'false').lower() == 'true'
+TTS_SPEAKING_RATE = float(os.getenv('TTS_SPEAKING_RATE', '1.0'))
+TTS_EMOTION_SAMPLES_DIR = os.getenv('TTS_EMOTION_SAMPLES_DIR', 'resources/emotion_samples')
+ESPEAK_PATH = os.getenv('ESPEAK_PATH', '/usr/local/bin/espeak')
 
 def assert_folder_structure() -> None:
     """
@@ -240,3 +247,32 @@ def get_imagemagick_path() -> str:
     """
     with open(os.path.join(ROOT_DIR, "config.json"), "r") as file:
         return json.load(file)["imagemagick_path"]
+
+def verify_tts_dependencies() -> bool:
+    """
+    Verifies that all TTS dependencies are installed and properly configured.
+    
+    Returns:
+        bool: True if all dependencies are present and configured
+    """
+    # Check if espeak is installed
+    espeak_path = shutil.which('espeak')
+    if not espeak_path:
+        print(colored("Error: espeak not found. Installing...", "red"))
+        os.system("brew install espeak")
+        return False
+    
+    # Update espeak path in environment
+    os.environ['ESPEAK_PATH'] = espeak_path
+    
+    # Create emotion samples directory if it doesn't exist
+    emotion_samples_path = os.path.join(ROOT_DIR, TTS_EMOTION_SAMPLES_DIR)
+    if not os.path.exists(emotion_samples_path):
+        os.makedirs(emotion_samples_path, exist_ok=True)
+        print(colored(f"Created emotion samples directory at {emotion_samples_path}", "green"))
+    
+    return True
+
+# Initialize environment and verify dependencies
+load_dotenv()
+verify_tts_dependencies()

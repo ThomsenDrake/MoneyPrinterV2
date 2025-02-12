@@ -7,3 +7,7 @@ google-maps-scraper-0.9.7/
 niche.txt
 *.exe
 auto.sh
+src/tts.py
+.env
+src/prompt_audit.py
+prompt_audit.txt

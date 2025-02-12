@@ -18,6 +18,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 
 class Twitter:
@@ -48,9 +50,9 @@ class Twitter:
         if get_headless():
             self.options.add_argument("--headless")
 
-        # Set the profile path
-        self.options.add_argument("-profile")
-        self.options.add_argument(fp_profile_path)
+        # Use FirefoxProfile to handle spaces in the profile path
+        profile = webdriver.FirefoxProfile(self.fp_profile_path)
+        self.options.profile = profile
 
         # Set the service
         self.service: Service = Service(GeckoDriverManager().install())
@@ -96,8 +98,13 @@ class Twitter:
             bot.find_element(By.XPATH, "//div[@role='textbox']").send_keys(body)
 
         time.sleep(1)
-        bot.find_element(By.CLASS_NAME, "notranslate").send_keys(keys.Keys.ENTER)
-        bot.find_element(By.XPATH, "//div[@data-testid='tweetButton']").click()
+        action = ActionChains(bot)
+        action.key_down(Keys.COMMAND).send_keys(Keys.ENTER).key_up(Keys.COMMAND).perform()
+        try:
+            bot.find_element(By.XPATH, "//div[@data-testid='tweetButton']").click()
+        except exceptions.NoSuchElementException:
+            # Element not found, tweet likely posted successfully.
+            pass
 
         if verbose:
             print(colored(" => Pressed [ENTER] Button on Twitter..", "blue"))

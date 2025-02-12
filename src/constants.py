@@ -25,6 +25,7 @@ TWITTER_CRON_OPTIONS = [
     "Once a day",
     "Twice a day",
     "Thrice a day",
+    "Custom Post Schedule",
     "Quit"
 ]
 

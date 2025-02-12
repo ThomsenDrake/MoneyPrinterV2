@@ -882,7 +882,7 @@ Rules:
             if retry_count > 0 and get_verbose():
                 info(f"\nRetry {retry_count + 1} of {MAX_RETRIES}")
 
-            prompt = f"""Write a dark atmospheric script about: {clean_subject}
+            prompt = f"""Write an engaging script about: {clean_subject}
 
 FORMAT:
 1. Write EXACTLY 10-12 lines of text
@@ -894,17 +894,17 @@ FORMAT:
 
 SENTENCE RULES:
 1. Length: 10-20 words each
-2. Style: Can use similes with "like" or "as"
-3. Structure: One clear action or image per line
-4. Flow: Each line connects to next
+2. Style: Use vivid descriptive language with strong imagery
+3. Structure: One clear concept or point per line
+4. Flow: Each line builds on previous ones
 5. Variety: Each line starts differently
 
 CONTENT:
-- Rich sensory details
-- Vivid visual imagery
-- Mounting tension
-- Atmospheric mood
-- Strong resolution
+- Clear main message
+- Engaging details
+- Natural progression
+- Memorable moments
+- Strong conclusion
 
 AVOID:
 - Starting with "The"
@@ -915,17 +915,18 @@ AVOID:
 - Semicolons
 
 STRUCTURE:
-Lines 1-2: Set striking scene
-Lines 3-4: Add atmosphere
-Lines 5-7: Build tension
-Lines 8-9: Peak intensity
-Lines 10-12: Dark resolution
+Lines 1-2: Introduce main concept
+Lines 3-4: Build context
+Lines 5-7: Develop key points
+Lines 8-9: Present insights
+Lines 10-12: Compelling conclusion
 
 STRONG STARTERS TO USE:
-Glowing, Darkness, Shadows, Deep, Strange,
-Ghostly, Beyond, Through, Within, Suddenly,
-Twisted, Shattered, Distant, Beneath, Ancient,
-Crimson, Massive, Swirling, Pulsing, Hollow
+Inside, Beyond, Through, Above, Below,
+Every, Around, Across, Within, Among,
+Moving, Growing, Rising, Deep, High,
+Fresh, Bold, Swift, Pure, Clear,
+Bright, Strong, Sure, True, Now
 
 Remember: One complete sentence per line, separated by line breaks.
 Return ONLY the sentences, no formatting or metadata."""
@@ -983,18 +984,15 @@ Return ONLY the sentences, no formatting or metadata."""
 TOPIC: {self.subject}
 
 REQUIREMENTS:
-1. Title + 2-3 hashtags
+1. Title + 2-3 relevant hashtags
 2. Max 80 characters total
 3. No quotes or special marks
 4. No punctuation at end
-5. Make it catchy
+5. Make it catchy and engaging
 
 DESIRED FORMAT:
 <Title Text> #Tag1 #Tag2
-
-END REQUIREMENTS""",
-                "Cosmic Horror Rises #Horror #SciFi #Multiverse"
-            )
+""")
             
             title_response = self.generate_response(prompt)
             if not title_response:
@@ -1009,15 +1007,13 @@ END REQUIREMENTS""",
             
             # Safety check - ensure we have hashtags
             if '#' not in title:
-                title += " #Horror #SciFi #Cosmic"
-                
-            # Enforce length limit
-            if len(title) > 100:
-                # Try to truncate at a hashtag
-                parts = title.split('#')
-                title = parts[0].strip()
-                # Add back minimum hashtags
-                title += " #Horror #SciFi"
+                # Extract relevant words from subject for hashtags
+                keywords = [word.strip() for word in self.subject.split() 
+                          if len(word.strip()) > 3 and word.strip().isalnum()]
+                # Take up to 2 unique keywords for hashtags
+                hashtags = list(set(keywords))[:2]
+                title += f" #{hashtags[0].capitalize() if hashtags else 'Trending'}"
+                title += f" #{hashtags[1].capitalize() if len(hashtags) > 1 else 'Viral'}"
             
             if get_verbose():
                 info(f"Title attempt {attempt + 1}: {title}")
@@ -1031,8 +1027,11 @@ END REQUIREMENTS""",
         else:
             if get_verbose():
                 warning("Using fallback title after all attempts failed")
-            # Use a safe fallback title if all attempts fail
-            title = f"Cosmic Horror Unleashed #Horror #SciFi"
+            # Use a generic fallback title based on the subject
+            clean_subject = self.subject.split('.')[0]  # Take first sentence if multiple
+            if len(clean_subject) > 50:
+                clean_subject = clean_subject[:47] + "..."
+            title = f"{clean_subject} #Trending #Viral"
             
         # Generate description with direct prompt for clarity
         desc_prompt = f"""Write a YouTube Shorts description:
@@ -1045,8 +1044,8 @@ FORMAT:
 
 RULES:
 - Max 400 chars total
-- Add 3-5 hashtags at end
-- Keep it engaging
+- Add 3-5 relevant hashtags at end
+- Keep it engaging and informative
 - No formatting marks
 - No quotes
 
@@ -1108,17 +1107,25 @@ Return ONLY the description text."""
         retry_count = 0
         
         while retry_count < MAX_RETRIES:
-            prompt = f"""Generate {n_prompts} cinematic image prompts about: {self.subject}
+            prompt = f"""Generate {n_prompts} professional image prompts about: {self.subject}
 
-Format: JSON array
-Example: ["A lone astronaut floating in cosmic void, dramatic lighting", "A mysterious artifact glowing with energy, dark atmosphere"]
+Format: JSON array of detailed image descriptions
 
-Rules:
-- Vivid scene descriptions
-- Include mood and lighting
-- Unique varied scenes
-- No numbers/bullets
-- Keep to theme"""
+Rules for each prompt:
+- Start with an engaging visual focus
+- Include lighting and composition details
+- Describe mood and atmosphere
+- Add artistic style elements
+- Keep descriptions clear and specific
+- Focus on visual impact
+- Include camera angle or perspective
+- Mention color themes where relevant
+
+Example format:
+["Close-up shot with dramatic lighting, shallow depth of field, vibrant colors",
+"Wide establishing shot, golden hour lighting, balanced composition"]
+
+Return a JSON array of unique, varied image prompts."""
 
             completion = self.generate_response(prompt)
             if not completion:
@@ -1166,14 +1173,14 @@ Rules:
         if not image_prompts:
             if get_verbose():
                 warning("No valid prompts generated after retries, using fallback prompts")
-            # Generate some basic prompts based on the subject
+            # Generate some content-appropriate fallback prompts based on the subject
             image_prompts = [
-                f"{self.subject}, dramatic cinematic shot",
-                f"{self.subject}, closeup detailed view",
+                f"{self.subject}, professional photography",
+                f"{self.subject}, detailed view",
                 f"{self.subject}, wide establishing shot",
-                f"{self.subject}, abstract artistic view",
-                f"{self.subject}, high contrast scene",
-                f"{self.subject}, emotional moment",
+                f"{self.subject}, artistic composition",
+                f"{self.subject}, dramatic lighting",
+                f"{self.subject}, dynamic perspective",
             ] * 3  # Repeat to get enough prompts
 
         # Ensure each prompt is complete and well-formed
@@ -1184,12 +1191,12 @@ Rules:
             # Skip if too short
             if len(prompt) < 20:
                 continue
-            # Add cinematic style if not present
-            if "cinematic" not in prompt.lower():
-                prompt += ", cinematic style"
+            # Add professional quality markers if not present
+            if not any(x in prompt.lower() for x in ["cinematic", "professional", "high quality"]):
+                prompt += ", professional quality"
             # Add to cleaned list
             cleaned_prompts.append(prompt)
-            
+
         image_prompts = cleaned_prompts
 
         # Ensure we have the right number of prompts
