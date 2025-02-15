@@ -73,6 +73,7 @@ class YouTube:
         self.tts_path: str = None  # Initialize TTS path
         self.video_path: str = None  # Initialize video path
         self.uploaded_video_url: str = None  # Initialize uploaded video URL
+        self.warnings: list = []  # Add warnings list to store non-critical issues
 
         # Initialize the Firefox profile
         self.options: Options = Options()
@@ -216,6 +217,10 @@ class YouTube:
                         if get_verbose():
                             warning(f"Failed to parse nested JSON: {str(e)}")
                 else:
+                    error("Failed to generate script")
+                    return None
+                    error("Failed to generate script")
+                    return None
                     # Try common field names
                     for key in ["content", "result", "text", "output"]:
                         if key in data:
@@ -631,19 +636,21 @@ Rules:
     def validate_script(self, script: str) -> bool:
         """
         Validates that a script meets our specific requirements for a YouTube Short.
+        Collects warnings for minor issues instead of failing immediately.
         
         Args:
             script (str): The script to validate
             
         Returns:
-            bool: True if the script meets all requirements
+            bool: True if the script meets minimum requirements
         """
-        def format_error(msg: str, details: str = None) -> None:
+        def add_warning(msg: str, details: str = None) -> None:
+            warning_msg = f"⚠️ {msg}"
+            if details:
+                warning_msg += f"\n{details}"
+            self.warnings.append(warning_msg)
             if get_verbose():
-                error_msg = f"⚠️ {msg}"
-                if details:
-                    error_msg += f"\n{details}"
-                warning(error_msg)
+                warning(warning_msg)
 
         # Extract and normalize content
         try:
@@ -653,112 +660,92 @@ Rules:
         except json.JSONDecodeError:
             pass
         
-        # First split on newlines to preserve intentional line breaks
-        # This is critical for properly parsing the sentence structure
         lines = [line.strip() for line in script.split('\n') if line.strip()]
-        
-        # Process each line as a potential sentence
         sentences = []
+        
         for line in lines:
-            # Remove any dialogue or other unwanted elements
+            # Clean up line (same as before)
             line = re.sub(r'"[^"]*"', '', line)
             line = re.sub(r"'[^']*'", '', line)
             line = re.sub(r'\([^)]*\)', '', line)
             line = re.sub(r'\[[^\]]*\]', '', line)
             line = line.strip()
             
-            # Skip empty lines or very short fragments
             if not line or len(line.split()) < 5:
                 continue
                 
-            # Ensure proper sentence ending
             if not line.endswith(('.', '!', '?')):
                 line += '.'
                 
             sentences.append(line)
         
-        # Remove any exact duplicates while preserving order
+        # Remove duplicates
         seen = set()
         sentences = [s for s in sentences if not (s in seen or seen.add(s))]
         
-        # Basic validations
-        if len(sentences) < 10 or len(sentences) > 12:
-            format_error(
-                f"Script has {len(sentences)} sentences, must be 10-12",
-                "Sentences found:\n" + "\n".join(f"{i+1}. {s}" for i, s in enumerate(sentences))
-            )
+        # Critical checks that must pass
+        if len(sentences) < 8:  # Reduced minimum from 10
+            error("Script has too few sentences (minimum 8 required)")
             return False
-                
-        # Word count validation using more accurate tokenization
+            
+        if len(sentences) > 15:  # Increased maximum from 12
+            error("Script has too many sentences (maximum 15 allowed)")
+            return False
+        
         def count_words(text: str) -> int:
-            # Count words but don't split on apostrophes or hyphens
             return len([w for w in re.findall(r"[a-zA-Z0-9]+(?:[-'][a-zA-Z0-9]+)*", text.lower())])
         
         total_words = sum(count_words(s) for s in sentences)
+        
+        # Collect warnings instead of failing for minor issues
+        if len(sentences) < 10 or len(sentences) > 12:
+            add_warning(
+                f"Script has {len(sentences)} sentences (recommended: 10-12)",
+                "This may affect video pacing"
+            )
+            
         if total_words < 150 or total_words > 250:
-            format_error(
-                f"Script has {total_words} words, must be 150-250",
+            add_warning(
+                f"Script has {total_words} words (recommended: 150-250)",
                 f"Average words per sentence: {total_words/len(sentences):.1f}"
             )
-            return False
         
-        # Validate each sentence
         seen_starters = {}
         for i, sentence in enumerate(sentences, 1):
-            # Check sentence length
             word_count = count_words(sentence)
-            if word_count < 10 or word_count > 20:
-                format_error(
-                    f"Sentence {i} has {word_count} words, must be 10-20",
+            if word_count < 8 or word_count > 25:  # Relaxed limits
+                add_warning(
+                    f"Sentence {i} has {word_count} words (recommended: 10-20)",
                     f"Sentence: {sentence}"
                 )
+            
+            # Still check for critical issues
+            if re.search(r'\b(INT\.|EXT\.|FADE |CUT TO|SCENE)\b', sentence, re.IGNORECASE):
+                error("Contains screenplay formatting")
                 return False
                 
-            # No screenplay formatting
-            if re.search(r'\b(INT\.|EXT\.|FADE |CUT TO|SCENE)\b', sentence, re.IGNORECASE):
-                format_error(
-                    "Contains screenplay formatting",
-                    f"Sentence {i}: {sentence}"
-                )
-                return False
-                    
-            # No first-person narrative
             if re.search(r'\b(I|me|my|mine|we|us|our)\b', sentence, re.IGNORECASE):
-                format_error(
-                    "Contains first-person narrative",
-                    f"Sentence {i}: {sentence}"
-                )
+                error("Contains first-person narrative")
                 return False
-                    
-            # No dialogue indicators
+                
             if re.search(r'(?:[:"]|(?:\b(?:said|asked|replied|spoke|called|whispered|shouted)\b))', sentence, re.IGNORECASE):
-                format_error(
-                    "Contains dialogue",
-                    f"Sentence {i}: {sentence}"
-                )
+                error("Contains dialogue")
                 return False
             
-            # Check for varied sentence starters
+            # Make sentence starters a warning instead of error
             starter = self.get_sentence_starter(sentence)
             if starter in seen_starters:
-                prev_i = seen_starters[starter]
-                format_error(
+                add_warning(
                     f"Repeated sentence starter word: '{starter}'",
-                    f"First use in sentence {prev_i}: {sentences[prev_i-1]}\n" +
-                    f"Repeated in sentence {i}: {sentence}"
+                    f"Used in sentences {seen_starters[starter]} and {i}"
                 )
-                return False
             seen_starters[starter] = i
                     
         if get_verbose():
-            info(f"\nScript validation passed:")
+            info(f"\nScript validation complete:")
             info(f"- {len(sentences)} sentences")
             info(f"- {total_words} total words")
-            info(f"- Average {total_words/len(sentences):.1f} words per sentence")
-            info("- All sentences start with different meaningful words")
-            info("\nFinal validated sentences:")
-            for i, s in enumerate(sentences, 1):
-                info(f"{i}. {s}")
+            info(f"- {len(self.warnings)} minor issues found")
             
         return True
 
@@ -1094,6 +1081,67 @@ Return ONLY the description text."""
         self.metadata = metadata
         return metadata
 
+    def parse_image_prompts(self, completion: str) -> List[str]:
+        """
+        Parse image prompts from various possible formats with fallback methods.
+        
+        Args:
+            completion (str): Raw completion from LLM
+            
+        Returns:
+            List[str]: List of valid image prompts
+        """
+        prompts = []
+        
+        # Method 1: Try parsing as JSON array
+        try:
+            if isinstance(completion, str):
+                # Clean up the string for JSON parsing
+                clean_json = (completion.strip()
+                            .replace('\n', '')
+                            .replace('""', '"')
+                            .strip('"'))
+                            
+                if not clean_json.startswith('['):
+                    clean_json = f'[{clean_json}]'
+                if not clean_json.endswith(']'):
+                    clean_json = f'{clean_json}]'
+                    
+                data = json.loads(clean_json)
+                if isinstance(data, list):
+                    prompts.extend(p.strip('"\' ') for p in data if p and isinstance(p, str))
+        except:
+            if get_verbose():
+                warning("JSON parsing failed, trying alternative methods")
+        
+        # Method 2: Try extracting from string list format
+        if not prompts:
+            try:
+                # Match anything that looks like a list item
+                items = re.findall(r'(?:^|\n)(?:\d+\.|[-•*]\s*|"\s*|\'|\[|\s+)([^"\'\[\]\n]+?)(?:"|\'|\]|$)', completion)
+                prompts.extend(item.strip() for item in items if len(item.strip()) > 20)
+            except:
+                if get_verbose():
+                    warning("List extraction failed, trying basic split")
+        
+        # Method 3: Basic line splitting as last resort
+        if not prompts:
+            try:
+                lines = [line.strip('"\' []') for line in completion.split('\n')]
+                prompts.extend(line for line in lines if len(line.strip()) > 20)
+            except:
+                if get_verbose():
+                    warning("Basic line splitting failed")
+        
+        # Deduplicate while preserving order
+        seen = set()
+        prompts = [p for p in prompts if not (p in seen or seen.add(p))]
+        
+        if get_verbose():
+            info(f"Parsed {len(prompts)} prompts using {'JSON' if prompts else 'fallback'} method")
+            
+        return prompts
+
     def generate_prompts(self) -> List[str]:
         """
         Generates AI Image Prompts based on the provided Video Script.
@@ -1106,6 +1154,7 @@ Return ONLY the description text."""
         
         MAX_RETRIES = 3
         retry_count = 0
+        image_prompts = []  # Initialize empty list
         
         while retry_count < MAX_RETRIES:
             prompt = f"""Generate {n_prompts} cinematic image prompts about: {self.subject}
@@ -1125,42 +1174,14 @@ Rules:
                 retry_count += 1
                 continue
 
-            # Clean up the response
-            completion = completion.strip()
-            
-            try:
-                # First try to parse as JSON array
-                if completion.startswith("[") and completion.endswith("]"):
-                    # Fix any truncated JSON first
-                    if not completion.endswith('"]'):
-                        completion = completion + '"]'
-                    
-                    image_prompts = json.loads(completion)
-                    if isinstance(image_prompts, list) and len(image_prompts) > 0:
-                        # Basic validation of prompts
-                        image_prompts = [
-                            p.strip().rstrip('",').strip('"\'') 
-                            for p in image_prompts 
-                            if isinstance(p, str) and len(p.strip()) > 20
-                        ]
-                        if image_prompts:
-                            break
+            # Parse prompts with new method
+            parsed_prompts = self.parse_image_prompts(completion)
+            if parsed_prompts:
+                image_prompts = parsed_prompts
+                break
                 
-                # If JSON parsing fails, try other formats
-                lines = re.split(r'\d+\.|•|-|\*|\n', completion)
-                image_prompts = [
-                    line.strip().strip('"\'"[]') 
-                    for line in lines 
-                    if line.strip() and len(line.strip()) > 20
-                ]
-                if image_prompts:
-                    break
-                    
-            except Exception as e:
-                if get_verbose():
-                    warning(f"Failed to parse prompts: {str(e)}")
-                retry_count += 1
-                continue
+            retry_count += 1
+            time.sleep(1)  # Short delay between retries
 
         # If we still don't have valid prompts after retries, use fallbacks
         if not image_prompts:
@@ -1666,6 +1687,9 @@ Rules:
                 error("Failed to generate metadata")
                 return None
 
+            # Export metadata as soon as it's generated
+            self.export_metadata()
+
             # Generate the Image Prompts
             if get_verbose():
                 info("Generating image prompts...")
@@ -1769,6 +1793,74 @@ Rules:
 
         return channel_id
 
+    def cleanup_generated_content(self) -> None:
+        """
+        Cleans up all generated files for this video.
+        """
+        try:
+            # Clean up images
+            for img_path in self.images:
+                if os.path.exists(img_path):
+                    os.remove(img_path)
+            
+            # Clean up TTS audio
+            if self.tts_path and os.path.exists(self.tts_path):
+                os.remove(self.tts_path)
+                
+            # Clean up final video
+            if self.video_path and os.path.exists(self.video_path):
+                os.remove(self.video_path)
+                
+            # Reset instance variables
+            self.images = []
+            self.tts_path = None
+            self.video_path = None
+            
+            if get_verbose():
+                info("Cleaned up all generated content")
+                
+        except Exception as e:
+            if get_verbose():
+                warning(f"Error during cleanup: {str(e)}")
+
+    def export_metadata(self) -> str:
+        """
+        Exports video metadata to a text file in the metadata directory.
+        
+        Returns:
+            str: Path to the metadata file
+        """
+        if not self.video_path or not self.metadata:
+            return None
+            
+        # Create metadata directory if it doesn't exist
+        metadata_dir = os.path.join(ROOT_DIR, "metadata")
+        if not os.path.exists(metadata_dir):
+            os.makedirs(metadata_dir)
+        
+        # Create filename with timestamp to ensure uniqueness
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_title = "".join(x for x in self.metadata['title'] if x.isalnum() or x in (' ', '-', '_'))[:50]
+        metadata_filename = f"{timestamp}_{safe_title}.txt"
+        metadata_path = os.path.join(metadata_dir, metadata_filename)
+        
+        try:
+            with open(metadata_path, 'w', encoding='utf-8') as f:
+                f.write("YouTube Short Metadata\n")
+                f.write("===================\n\n")
+                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Title: {self.metadata['title']}\n\n")
+                f.write(f"Description:\n{self.metadata['description']}\n")
+                
+            if get_verbose():
+                info(f"Exported metadata to: {metadata_path}")
+            return metadata_path
+            
+        except Exception as e:
+            if get_verbose():
+                warning(f"Failed to export metadata: {str(e)}")
+            return None
+
     def upload_video(self) -> bool:
         """
         Uploads the video to YouTube.
@@ -1792,14 +1884,25 @@ Rules:
             file_input = file_picker.find_element(By.TAG_NAME, INPUT_TAG)
             file_input.send_keys(self.video_path)
 
-            # Wait for upload to finish
-            time.sleep(5)
+            # Wait for upload to finish - increased from 5 to 15 seconds for initial wait
+            time.sleep(15)
 
-            # Set title
-            textboxes = driver.find_elements(By.ID, YOUTUBE_TEXTBOX_ID)
-
-            title_el = textboxes[0]
-            description_el = textboxes[-1]
+            # Find textboxes using correct selectors
+            textbox_selectors = [
+                "//div[@id='textbox' and @aria-label='Add a title that describes your video']",
+                "//div[@id='textbox' and @aria-label='Tell viewers about your video']"
+            ]
+            
+            try:
+                title_el = driver.find_element(By.XPATH, textbox_selectors[0])
+                description_el = driver.find_element(By.XPATH, textbox_selectors[1])
+            except Exception as e:
+                if verbose:
+                    error(f"Failed to find title/description elements: {str(e)}")
+                    error("Retrying with wait...")
+                time.sleep(5)  # Additional wait if elements not found
+                title_el = driver.find_element(By.XPATH, textbox_selectors[0])
+                description_el = driver.find_element(By.XPATH, textbox_selectors[1])
 
             if verbose:
                 info("\t=> Setting title...")
@@ -1812,8 +1915,8 @@ Rules:
             if verbose:
                 info("\t=> Setting description...")
 
-            # Set description
-            time.sleep(10)
+            # Set description - increased from 10 to 30 seconds to ensure processing is complete
+            time.sleep(30)
             description_el.click()
             time.sleep(0.5)
             description_el.clear()
@@ -1905,6 +2008,9 @@ Rules:
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
 
+            # Export metadata after successful upload
+            self.export_metadata()
+
             # Close the browser
             driver.quit()
 
@@ -1913,37 +2019,9 @@ Rules:
             self.browser.quit()
             return False
 
-
-    def get_videos(self) -> List[dict]:
+    def validate_audio_file(self, audio_path: str, min_duration: float = 1.0) -> bool:
         """
-        Gets the uploaded videos from the YouTube Channel.
-
-        Returns:
-            videos (List[dict]): The uploaded videos.
-        """
-        if not os.path.exists(get_youtube_cache_path()):
-            # Create the cache file
-            with open(get_youtube_cache_path(), 'w') as file:
-                json.dump({
-                    "videos": []
-                }, file, indent=4)
-            return []
-
-        videos = []
-        # Read the cache file
-        with open(get_youtube_cache_path(), 'r') as file:
-            previous_json = json.loads(file.read())
-            # Find our account
-            accounts = previous_json["accounts"]
-            for account in accounts:
-                if account["id"] == self._account_uuid:
-                    videos = account["videos"]
-
-        return videos
-
-    def validate_audio_file(self, audio_path: str, min_duration: float = 0.1) -> bool:
-        """
-        Validates that an audio file exists and contains valid audio data.
+        Validates the generated audio file to ensure it meets minimum requirements.
         
         Args:
             audio_path (str): Path to the audio file to validate

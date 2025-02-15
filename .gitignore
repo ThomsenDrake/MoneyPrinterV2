@@ -11,3 +11,5 @@ src/tts.py
 .env
 src/prompt_audit.py
 prompt_audit.txt
+src/classes/YouTube-Generic.py
+src/classes/YouTube-Legacy.py

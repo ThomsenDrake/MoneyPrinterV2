@@ -113,10 +113,32 @@ def main():
                     tts = TTS()
 
                     if user_input == 1:
-                        youtube.generate_video(tts)
-                        upload_to_yt = question("Do you want to upload this video to YouTube? (Yes/No): ")
-                        if upload_to_yt.lower() == "yes":
-                            youtube.upload_video()
+                        video_path = youtube.generate_video(tts)
+                        if video_path:
+                            # Show any warnings before asking about upload
+                            if youtube.warnings:
+                                warning("\nThe following issues were detected during generation:")
+                                for w in youtube.warnings:
+                                    warning(w)
+                                warning("\nThese issues may affect video quality but are not critical.")
+                            
+                            upload_to_yt = question("Do you want to upload this video to YouTube? (Yes/No): ")
+                            if upload_to_yt.lower() == "yes":
+                                try:
+                                    upload_successful = youtube.upload_video()
+                                    if upload_successful and youtube.uploaded_video_url:
+                                        success("Video uploaded successfully!")
+                                        youtube.cleanup_generated_content()
+                                    else:
+                                        error("Upload failed after all attempts.")
+                                        warning("Generated content has been preserved for manual upload.")
+                                        warning(f"Video file location: {video_path}")
+                                except Exception as e:
+                                    error(f"Upload error: {str(e)}")
+                                    warning("Generated content has been preserved for manual upload.")
+                                    warning(f"Video file location: {video_path}")
+                        else:
+                            error("Video generation failed.")
                     elif user_input == 2:
                         videos = youtube.get_videos()
 

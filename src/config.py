@@ -16,7 +16,7 @@ ESPEAK_PATH = os.getenv('ESPEAK_PATH', '/usr/local/bin/espeak')
 
 def assert_folder_structure() -> None:
     """
-    Make sure that the nessecary folder structure is present.
+    Make sure that the necessary folder structure is present.
 
     Returns:
         None
@@ -26,6 +26,13 @@ def assert_folder_structure() -> None:
         if get_verbose():
             print(colored(f"=> Creating .mp folder at {os.path.join(ROOT_DIR, '.mp')}", "green"))
         os.makedirs(os.path.join(ROOT_DIR, ".mp"))
+
+    # Create the metadata folder
+    metadata_dir = os.path.join(ROOT_DIR, "metadata")
+    if not os.path.exists(metadata_dir):
+        if get_verbose():
+            print(colored(f"=> Creating metadata folder at {metadata_dir}", "green"))
+        os.makedirs(metadata_dir)
 
 def get_first_time_running() -> bool:
     """
