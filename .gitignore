@@ -13,3 +13,7 @@ src/prompt_audit.py
 prompt_audit.txt
 src/classes/YouTube-Generic.py
 src/classes/YouTube-Legacy.py
+client_secrets.json
+archive
+.DS_Store
+metadata

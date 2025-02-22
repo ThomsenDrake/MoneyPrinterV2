@@ -4,6 +4,7 @@ import json
 import time
 import hashlib
 import requests
+import traceback
 import assemblyai as aai
 import numpy as np
 from scipy.io import wavfile
@@ -28,24 +29,32 @@ from selenium.webdriver.firefox.options import Options
 from moviepy.video.tools.subtitles import SubtitlesClip
 from webdriver_manager.firefox import GeckoDriverManager
 from datetime import datetime
+import httplib2
+import random
+import sys
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client.file import Storage
+from oauth2client.tools import run_flow
 
 # Set ImageMagick Path
 change_settings({"IMAGEMAGICK_BINARY": get_imagemagick_path()})
 
 class YouTube:
     """
-    Class for YouTube Automation.
-
-    Steps to create a YouTube Short:
-    1. Generate a topic [DONE]
-    2. Generate a script [DONE]
-    3. Generate metadata (Title, Description, Tags) [DONE]
-    4. Generate AI Image Prompts [DONE]
-    4. Generate Images based on generated Prompts [DONE]
-    5. Convert Text-to-Speech [DONE]
-    6. Show images each for n seconds, n: Duration of TTS / Amount of images [DONE]
-    7. Combine Concatenated Images with the Text-to-Speech [DONE]
+    Class for YouTube Automation using the YouTube Data API.
     """
+    # YouTube API constants
+    YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"
+    YOUTUBE_API_SERVICE_NAME = "youtube"
+    YOUTUBE_API_VERSION = "v3"
+    CLIENT_SECRETS_FILE = os.path.join(ROOT_DIR, "client_secrets.json")
+    MAX_RETRIES = 10
+    RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
+    RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError)
+
     def __init__(self, account_uuid: str, account_nickname: str, fp_profile_path: str, niche: str, language: str) -> None:
         """
         Constructor for YouTube Class.
@@ -74,22 +83,41 @@ class YouTube:
         self.video_path: str = None  # Initialize video path
         self.uploaded_video_url: str = None  # Initialize uploaded video URL
         self.warnings: list = []  # Add warnings list to store non-critical issues
+        self._youtube_service = None  # Initialize YouTube service
+        self.browser = None
+        self.using_api = os.path.exists(self.CLIENT_SECRETS_FILE)
 
-        # Initialize the Firefox profile
-        self.options: Options = Options()
-        
-        # Set headless state of browser
-        if get_headless():
-            self.options.add_argument("--headless")
+        # Only initialize browser if not using API upload
+        if not self.using_api:
+            if get_verbose():
+                info("No API credentials found, falling back to browser automation")
+            try:
+                # Initialize the Firefox profile
+                self.options: Options = Options()
+                
+                # Set headless state of browser
+                if get_headless():
+                    self.options.add_argument("--headless")
 
-        profile = webdriver.FirefoxProfile(self._fp_profile_path)
-        self.options.profile = profile
+                profile = webdriver.FirefoxProfile(self._fp_profile_path)
+                self.options.profile = profile
 
-        # Set the service
-        self.service: Service = Service(GeckoDriverManager().install())
+                # Set the service
+                self.service: Service = Service(GeckoDriverManager().install())
 
-        # Initialize the browser
-        self.browser: webdriver.Firefox = webdriver.Firefox(service=self.service, options=self.options)
+                # Initialize the browser
+                self.browser: webdriver.Firefox = webdriver.Firefox(service=self.service, options=self.options)
+            except Exception as e:
+                if get_verbose():
+                    warning(f"Failed to initialize browser: {str(e)}")
+                    warning("This error can be ignored if using API upload")
+        else:
+            # Verify API access during initialization
+            if not self.verify_api_access():
+                error("YouTube API verification failed during initialization")
+                raise Exception("YouTube API authentication failed. Please check your credentials.")
+            # Sync video history during initialization
+            self.sync_video_history()
 
     @property
     def niche(self) -> str:
@@ -1103,13 +1131,18 @@ Return ONLY the description text."""
                             .strip('"'))
                             
                 if not clean_json.startswith('['):
-                    clean_json = f'[{clean_json}]'
+                    clean_json = f"[{clean_json}"
                 if not clean_json.endswith(']'):
-                    clean_json = f'{clean_json}]'
+                    clean_json = f"{clean_json}]"
                     
                 data = json.loads(clean_json)
                 if isinstance(data, list):
-                    prompts.extend(p.strip('"\' ') for p in data if p and isinstance(p, str))
+                    # Clean each prompt individually
+                    for prompt in data:
+                        if isinstance(prompt, str) and len(prompt.strip()) > 20:
+                            # Remove any list formatting artifacts and quotes
+                            clean_prompt = re.sub(r'^[\'"[\s]*|[\'"]\s*,\s*[\'"]|\s*[\'"]\s*$', '', prompt.strip())
+                            prompts.append(clean_prompt)
         except:
             if get_verbose():
                 warning("JSON parsing failed, trying alternative methods")
@@ -1119,19 +1152,25 @@ Return ONLY the description text."""
             try:
                 # Match anything that looks like a list item
                 items = re.findall(r'(?:^|\n)(?:\d+\.|[-•*]\s*|"\s*|\'|\[|\s+)([^"\'\[\]\n]+?)(?:"|\'|\]|$)', completion)
-                prompts.extend(item.strip() for item in items if len(item.strip()) > 20)
+                for item in items:
+                    clean_item = re.sub(r'^[\'"[\s]*|[\'"]\s*,\s*[\'"]|\s*[\'"]\s*$', '', item.strip())
+                    if len(clean_item) > 20:
+                        prompts.append(clean_item)
             except:
                 if get_verbose():
-                    warning("List extraction failed, trying basic split")
+                    warning("String list parsing failed, trying basic line split")
         
         # Method 3: Basic line splitting as last resort
         if not prompts:
             try:
                 lines = [line.strip('"\' []') for line in completion.split('\n')]
-                prompts.extend(line for line in lines if len(line.strip()) > 20)
+                for line in lines:
+                    clean_line = re.sub(r'^[\'"[\s]*|[\'"]\s*,\s*[\'"]|\s*[\'"]\s*$', '', line.strip())
+                    if len(clean_line) > 20:
+                        prompts.append(clean_line)
             except:
                 if get_verbose():
-                    warning("Basic line splitting failed")
+                    warning("Basic line split parsing failed")
         
         # Deduplicate while preserving order
         seen = set()
@@ -1157,17 +1196,30 @@ Return ONLY the description text."""
         image_prompts = []  # Initialize empty list
         
         while retry_count < MAX_RETRIES:
-            prompt = f"""Generate {n_prompts} cinematic image prompts about: {self.subject}
+            prompt = f"""Generate {n_prompts} separate cinematic image prompts based on this topic: {self.subject}
 
-Format: JSON array
-Example: ["A lone astronaut floating in cosmic void, dramatic lighting", "A mysterious artifact glowing with energy, dark atmosphere"]
+RULES:
+1. Return as a proper JSON array
+2. One scene per prompt
+3. Each prompt must be complete on its own
+4. No numbering or bullet points
+5. Include mood and lighting details
+6. Keep each prompt under 200 characters
 
-Rules:
+OUTPUT FORMAT:
+[
+  "First complete image prompt",
+  "Second complete image prompt",
+  "Third complete image prompt"
+]
+
+STYLE GUIDE:
 - Vivid scene descriptions
-- Include mood and lighting
-- Unique varied scenes
-- No numbers/bullets
-- Keep to theme"""
+- Cinematic composition
+- Atmospheric lighting
+- Focus on visual elements
+- No character names
+- No dialogue"""
 
             completion = self.generate_response(prompt)
             if not completion:
@@ -1229,7 +1281,12 @@ Rules:
                     ", different style",
                     ", different mood"
                 ]
-                image_prompts.append(base_prompt + variations[len(image_prompts) % len(variations)])
+                variation = variations[len(image_prompts) % len(variations)]
+                # Only add variation if it won't make prompt too long
+                if len(base_prompt) + len(variation) <= 200:
+                    image_prompts.append(base_prompt + variation)
+                else:
+                    image_prompts.append(base_prompt)
         elif len(image_prompts) > n_prompts:
             if get_verbose():
                 warning(f"Got {len(image_prompts)} prompts, trimming to {n_prompts}")
@@ -1249,6 +1306,61 @@ Rules:
 
         return image_prompts
 
+    def validate_image_prompt(self, prompt: str) -> str:
+        """
+        Validates and cleans an image prompt to ensure it's a single, complete prompt.
+        
+        Args:
+            prompt (str): The prompt to validate
+            
+        Returns:
+            str: Cleaned prompt if valid, None if invalid
+        """
+        if not prompt:
+            return None
+            
+        # Clean up the prompt
+        prompt = prompt.strip()
+        prompt = re.sub(r'^[\'"[\s]*|[\'"]\s*,\s*[\'"]|\s*[\'"]\s*$', '', prompt)
+        
+        # Check for invalid characters that might indicate multiple prompts
+        if any(c in prompt for c in ['[', ']', '{', '}', '"', "'"]):
+            if get_verbose():
+                warning(f"Found invalid characters in prompt, cleaning: {prompt}")
+            # Try to extract just the first complete prompt
+            parts = re.split(r'["\'\[\]{}]', prompt)
+            parts = [p.strip() for p in parts if len(p.strip()) > 20]
+            if not parts:
+                return None
+            prompt = parts[0]
+            
+        # Check for common separators that might indicate multiple prompts
+        if any(sep in prompt for sep in [', and', '; and', ' and ', ' then ']):
+            if get_verbose():
+                warning(f"Found potential prompt separator, splitting: {prompt}")
+            # Take only the first complete part
+            for sep in [', and', '; and', ' and ', ' then ']:
+                if sep in prompt:
+                    prompt = prompt.split(sep)[0]
+                    
+        # Enforce length limits
+        if len(prompt) < 20:
+            if get_verbose():
+                warning(f"Prompt too short: {prompt}")
+            return None
+            
+        if len(prompt) > 500:
+            if get_verbose():
+                warning(f"Prompt too long ({len(prompt)} chars), truncating")
+            prompt = prompt[:497] + "..."
+            
+        # Add style keywords if missing
+        style_keywords = ["cinematic", "dramatic", "detailed", "professional"]
+        if not any(word in prompt.lower() for word in style_keywords):
+            prompt += ", cinematic style, dramatic lighting"
+            
+        return prompt
+
     def generate_image(self, prompt: str) -> str:
         """
         Generates an AI Image based on the given prompt.
@@ -1259,6 +1371,12 @@ Rules:
         Returns:
             path (str): The path to the generated image.
         """
+        # Validate and clean the prompt
+        prompt = self.validate_image_prompt(prompt)
+        if not prompt:
+            error("Invalid image prompt")
+            return None
+
         if get_verbose():
             info(f"Generating Image with prompt: {prompt}")
 
@@ -1269,17 +1387,9 @@ Rules:
             error("Image generation worker URL not configured")
             return None
 
-        # Clean up and format prompt
-        prompt = prompt.strip()
-        if len(prompt) > 500:  # Truncate very long prompts
-            prompt = prompt[:497] + "..."
-
-        # Add some style keywords if they're not present
-        style_keywords = ["cinematic", "dramatic", "detailed", "professional"]
-        if not any(word in prompt.lower() for word in style_keywords):
-            prompt += ", cinematic style, dramatic lighting"
-
-        url = f"{worker_url}?prompt={prompt}&model=sdxl"
+        # Ensure the prompt is properly URL encoded
+        encoded_prompt = requests.utils.quote(prompt)
+        url = f"{worker_url}?prompt={encoded_prompt}&model=sdxl"
 
         MAX_RETRIES = 3
         retry_count = 0
@@ -1287,45 +1397,30 @@ Rules:
         while retry_count < MAX_RETRIES:
             try:
                 if get_verbose():
-                    info(f"Attempt {retry_count + 1} of {MAX_RETRIES}")
-                    info(f"Sending request to: {url}")
+                    info(f"Requesting image generation (attempt {retry_count + 1}/{MAX_RETRIES})")
                 
-                response = requests.get(url, timeout=30)  # Add timeout
+                response = requests.get(url, timeout=30)
                 
                 if response.status_code == 200:
-                    if response.headers.get('content-type') == 'image/png':
-                        image_path = os.path.join(ROOT_DIR, ".mp", str(uuid4()) + ".png")
-                        
-                        with open(image_path, "wb") as image_file:
-                            image_file.write(response.content)
-                        
-                        # Verify the image was written successfully
-                        if os.path.exists(image_path) and os.path.getsize(image_path) > 1000:
-                            if get_verbose():
-                                info(f"Image generated successfully: {image_path}")
-                                info(f"Image size: {os.path.getsize(image_path)} bytes")
-                            
-                            self.images.append(image_path)
-                            return image_path
-                        else:
-                            if get_verbose():
-                                warning("Generated image file is too small or invalid")
-                            os.remove(image_path)  # Clean up invalid file
+                    # Save the image
+                    image_path = os.path.join(ROOT_DIR, ".mp", str(uuid4()) + ".png")
+                    with open(image_path, "wb") as f:
+                        f.write(response.content)
+                    
+                    if os.path.exists(image_path) and os.path.getsize(image_path) > 1000:
+                        if get_verbose():
+                            info(f"Generated image saved to: {image_path}")
+                        return image_path
                     else:
                         if get_verbose():
-                            warning(f"Unexpected content type: {response.headers.get('content-type')}")
+                            warning("Generated image file is invalid or too small")
                 else:
                     if get_verbose():
-                        warning(f"Request failed with status {response.status_code}")
-                        if response.text:
-                            warning(f"Error response: {response.text[:200]}")
+                        warning(f"Image generation failed with status {response.status_code}")
                 
             except Exception as e:
                 if get_verbose():
-                    error(f"Error generating image: {str(e)}")
-                    if hasattr(e, 'response'):
-                        error(f"Response status: {e.response.status_code}")
-                        error(f"Response content: {e.response.text[:200]}")
+                    warning(f"Error generating image: {str(e)}")
             
             retry_count += 1
             if retry_count < MAX_RETRIES:
@@ -1440,6 +1535,50 @@ Rules:
             file.write(subtitles)
 
         return srt_path
+
+    def archive_video(self, video_path: str) -> str:
+        """
+        Archives the video and its metadata to the archive directory.
+        
+        Args:
+            video_path (str): Path to the video file to archive
+            
+        Returns:
+            str: Path to the archived video file
+        """
+        # Create archive directory if it doesn't exist
+        archive_dir = os.path.join(ROOT_DIR, "archive")
+        if not os.path.exists(archive_dir):
+            os.makedirs(archive_dir)
+            
+        # Create a timestamped subdirectory for this video
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_title = "".join(x for x in self.metadata['title'] if x.isalnum() or x in (' ', '-', '_'))[:50]
+        video_dir = os.path.join(archive_dir, f"{timestamp}_{safe_title}")
+        os.makedirs(video_dir)
+        
+        # Copy video file
+        video_ext = os.path.splitext(video_path)[1]
+        archived_video_path = os.path.join(video_dir, f"video{video_ext}")
+        import shutil
+        shutil.copy2(video_path, archived_video_path)
+        
+        # Save metadata
+        metadata_path = os.path.join(video_dir, "metadata.txt")
+        try:
+            with open(metadata_path, 'w', encoding='utf-8') as f:
+                f.write("YouTube Short Metadata\n")
+                f.write("===================\n\n")
+                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Title: {self.metadata['title']}\n\n")
+                f.write(f"Description:\n{self.metadata['description']}\n")
+                if self.script:
+                    f.write(f"\nScript:\n{self.script}\n")
+        except Exception as e:
+            if get_verbose():
+                warning(f"Failed to save metadata: {str(e)}")
+                
+        return archived_video_path
 
     def combine(self) -> str:
         """
@@ -1635,6 +1774,10 @@ Rules:
                         success(f"Generated video: {output_path}")
                         info(f"Video size: {os.path.getsize(output_path)} bytes")
                         info(f"Duration: {max_duration:.2f} seconds")
+                    # Archive the video before returning
+                    archived_path = self.archive_video(output_path)
+                    if get_verbose() and archived_path:
+                        info(f"Video archived to: {archived_path}")
                     return output_path
                 else:
                     error("Generated video file is invalid or too small")
@@ -1662,8 +1805,17 @@ Rules:
             path (str): The path to the generated MP4 File.
         """
         try:
+            # Only verify API if we're using it
+            if self.using_api and not self.verify_api_access():
+                error("YouTube API verification failed. Please check your credentials before generating video.")
+                return None
+
             if get_verbose():
                 info("Starting video generation process...")
+                if self.using_api:
+                    info("Using YouTube Data API for upload")
+                else:
+                    info("Using browser automation fallback")
 
             # Generate the Topic
             if get_verbose():
@@ -1745,18 +1897,16 @@ Rules:
 
             # Combine everything
             if get_verbose():
-                info("Combining video elements...")
-                info(f"Using TTS file: {tts_path}")
-                info(f"Number of images: {len(self.images)}")
-                
+                info("Combining video...")
             path = self.combine()
             if not path:
-                error("Failed to combine video elements")
+                error("Failed to combine video")
                 return None
 
+            # Note: combine() now handles archiving the video automatically
+
             if get_verbose():
-                info(f" => Generated Video: {path}")
-                info(f" => Video size: {os.path.getsize(path)} bytes")
+                success("Video generation complete!")
 
             self.video_path = os.path.abspath(path)
             return path
@@ -1766,32 +1916,40 @@ Rules:
             error(f"Error type: {type(e).__name__}")
             error(f"Error location: {e.__traceback__.tb_frame.f_code.co_filename}:{e.__traceback__.tb_lineno}")
             if get_verbose():
-                error(f"Current state:")
-                error(f"Subject: {self.subject}")
-                error(f"Script: {self.script}")
-                error(f"Metadata: {self.metadata}")
-                error(f"Image prompts: {len(self.image_prompts) if self.image_prompts else 0}")
-                error(f"Images generated: {len(self.images) if self.images else 0}")
-                if hasattr(self, 'tts_path') and self.tts_path:
-                    error(f"TTS path: {self.tts_path}")
-                    if os.path.exists(self.tts_path):
-                        error(f"TTS file size: {os.path.getsize(self.tts_path)} bytes")
+                error(f"Stack trace: {traceback.format_exc()}")
             return None
     
     def get_channel_id(self) -> str:
         """
-        Gets the Channel ID of the YouTube Account.
+        Gets the Channel ID of the YouTube Account using the API.
 
         Returns:
             channel_id (str): The Channel ID.
         """
-        driver = self.browser
-        driver.get("https://studio.youtube.com")
-        time.sleep(2)
-        channel_id = driver.current_url.split("/")[-1]
-        self.channel_id = channel_id
+        try:
+            youtube = self._get_authenticated_service()
+            channels_response = youtube.channels().list(
+                part='id',
+                mine=True
+            ).execute()
 
-        return channel_id
+            if not channels_response.get('items'):
+                error("No channels found for authenticated user")
+                return None
+
+            channel_id = channels_response['items'][0]['id']
+            self.channel_id = channel_id
+            if get_verbose():
+                info(f"Retrieved channel ID: {channel_id}")
+
+            return channel_id
+
+        except HttpError as e:
+            error(f"HTTP error retrieving channel ID: {e.resp.status} - {e.content}")
+            return None
+        except Exception as e:
+            error(f"Error retrieving channel ID: {str(e)}")
+            return None
 
     def cleanup_generated_content(self) -> None:
         """
@@ -1800,7 +1958,7 @@ Rules:
         try:
             # Clean up images
             for img_path in self.images:
-                if os.path.exists(img_path):
+                if img_path and os.path.exists(img_path):
                     os.remove(img_path)
             
             # Clean up TTS audio
@@ -1815,6 +1973,14 @@ Rules:
             self.images = []
             self.tts_path = None
             self.video_path = None
+            
+            # Close browser only if we were using it
+            if self.browser and not self.using_api:
+                try:
+                    self.browser.quit()
+                except Exception as e:
+                    if get_verbose():
+                        warning(f"Failed to close browser: {str(e)}")
             
             if get_verbose():
                 info("Cleaned up all generated content")
@@ -1861,162 +2027,167 @@ Rules:
                 warning(f"Failed to export metadata: {str(e)}")
             return None
 
-    def upload_video(self) -> bool:
+    def _get_authenticated_service(self) -> any:
         """
-        Uploads the video to YouTube.
-
+        Get an authenticated YouTube API service instance using OAuth2.
+        Uses client_secrets.json for authentication and stores credentials.
+        
         Returns:
-            success (bool): Whether the upload was successful or not.
+            googleapiclient.discovery.Resource: Authenticated YouTube API service
         """
-        try:
-            self.get_channel_id()
+        # If we already have a verified service, return it
+        if self._youtube_service is not None:
+            return self._youtube_service
 
-            driver = self.browser
-            verbose = get_verbose()
+        flow = flow_from_clientsecrets(
+            self.CLIENT_SECRETS_FILE,
+            scope=self.YOUTUBE_UPLOAD_SCOPE,
+            message="Missing client secrets file"
+        )
 
-            # Go to youtube.com/upload
-            driver.get("https://www.youtube.com/upload")
+        storage = Storage(os.path.join(ROOT_DIR, ".mp", f"{self._account_uuid}-oauth2.json"))
+        credentials = storage.get()
 
-            # Set video file
-            FILE_PICKER_TAG = "ytcp-uploads-file-picker"
-            file_picker = driver.find_element(By.TAG_NAME, FILE_PICKER_TAG)
-            INPUT_TAG = "input"
-            file_input = file_picker.find_element(By.TAG_NAME, INPUT_TAG)
-            file_input.send_keys(self.video_path)
+        if credentials is None or credentials.invalid:
+            credentials = run_flow(flow, storage)
 
-            # Wait for upload to finish - increased from 5 to 15 seconds for initial wait
-            time.sleep(15)
+        return build(self.YOUTUBE_API_SERVICE_NAME, self.YOUTUBE_API_VERSION,
+                    http=credentials.authorize(httplib2.Http()))
 
-            # Find textboxes using correct selectors
-            textbox_selectors = [
-                "//div[@id='textbox' and @aria-label='Add a title that describes your video']",
-                "//div[@id='textbox' and @aria-label='Tell viewers about your video']"
-            ]
+    def _resumable_upload(self, insert_request: any) -> str:
+        """
+        Implement resumable upload with exponential backoff strategy.
+        Retries failed uploads using exponential backoff timing.
+        
+        Args:
+            insert_request: YouTube API insert request object
             
+        Returns:
+            str: Uploaded video ID on success, None on failure
+        """
+        response = None
+        error = None
+        retry = 0
+        
+        while response is None:
             try:
-                title_el = driver.find_element(By.XPATH, textbox_selectors[0])
-                description_el = driver.find_element(By.XPATH, textbox_selectors[1])
-            except Exception as e:
-                if verbose:
-                    error(f"Failed to find title/description elements: {str(e)}")
-                    error("Retrying with wait...")
-                time.sleep(5)  # Additional wait if elements not found
-                title_el = driver.find_element(By.XPATH, textbox_selectors[0])
-                description_el = driver.find_element(By.XPATH, textbox_selectors[1])
+                if get_verbose():
+                    info("Uploading video file...")
+                    
+                status, response = insert_request.next_chunk()
+                if response is not None:
+                    if 'id' in response:
+                        if get_verbose():
+                            success(f"Video successfully uploaded with ID: {response['id']}")
+                        return response['id']
+                    else:
+                        error("Upload failed with unexpected response")
+                        return None
+                        
+            except HttpError as e:
+                if e.resp.status in self.RETRIABLE_STATUS_CODES:
+                    error = f"Retriable HTTP error {e.resp.status} occurred: {e.content}"
+                else:
+                    raise
+                    
+            except self.RETRIABLE_EXCEPTIONS as e:
+                error = f"Retriable error occurred: {str(e)}"
+                
+            if error is not None:
+                if get_verbose():
+                    warning(error)
+                retry += 1
+                if retry > self.MAX_RETRIES:
+                    error("No longer attempting to retry")
+                    return None
+                    
+                max_sleep = 2 ** retry
+                sleep_seconds = random.random() * max_sleep
+                if get_verbose():
+                    info(f"Sleeping {sleep_seconds} seconds before retry...")
+                time.sleep(sleep_seconds)
+                
+        return None
 
-            if verbose:
-                info("\t=> Setting title...")
+    def upload_video(self) -> bool:
+        try:
+            if not os.path.exists(self.video_path):
+                error("Video file does not exist")
+                return False
+                
+            if get_verbose():
+                info(f"Starting video upload: {self.video_path}")
+                
+            if self.using_api:
+                # Use API upload path
+                youtube = self._get_authenticated_service()
+                
+                # Prepare video metadata
+                tags = []
+                if "#" in self.metadata["title"]:
+                    tags = [tag.strip() for tag in re.findall(r'#(\w+)', self.metadata["title"])]
+                
+                body = {
+                    'snippet': {
+                        'title': self.metadata["title"],
+                        'description': self.metadata["description"],
+                        'tags': tags,
+                        'categoryId': "22"
+                    },
+                    'status': {
+                        'privacyStatus': 'public',  # Changed from 'unlisted' to 'public'
+                        'selfDeclaredMadeForKids': get_is_for_kids()
+                    }
+                }
+                
+                # Prepare upload request
+                insert_request = youtube.videos().insert(
+                    part=",".join(body.keys()),
+                    body=body,
+                    media_body=MediaFileUpload(
+                        self.video_path, 
+                        chunksize=-1,
+                        resumable=True
+                    )
+                )
+                
+                video_id = self._resumable_upload(insert_request)
+                
+                if not video_id:
+                    error("Failed to get video ID after upload")
+                    return False
+                    
+                # Build video URL
+                url = build_url(video_id)
+                self.uploaded_video_url = url
+                
+                if get_verbose():
+                    success(f"Video successfully uploaded: {url}")
+                
+                # Add to cache
+                self.add_video({
+                    "title": self.metadata["title"],
+                    "description": self.metadata["description"],
+                    "url": url,
+                    "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                })
+                
+                # Export metadata
+                self.export_metadata()
 
-            title_el.click()
-            time.sleep(1)
-            title_el.clear()
-            title_el.send_keys(self.metadata["title"])
-
-            if verbose:
-                info("\t=> Setting description...")
-
-            # Set description - increased from 10 to 30 seconds to ensure processing is complete
-            time.sleep(30)
-            description_el.click()
-            time.sleep(0.5)
-            description_el.clear()
-            description_el.send_keys(self.metadata["description"])
-
-            time.sleep(0.5)
-
-            # Set `made for kids` option
-            if verbose:
-                info("\t=> Setting `made for kids` option...")
-
-            is_for_kids_checkbox = driver.find_element(By.NAME, YOUTUBE_MADE_FOR_KIDS_NAME)
-            is_not_for_kids_checkbox = driver.find_element(By.NAME, YOUTUBE_NOT_MADE_FOR_KIDS_NAME)
-
-            if not get_is_for_kids():
-                is_not_for_kids_checkbox.click()
+                # Sync video history after successful upload
+                self.sync_video_history()
+                
+                return True
             else:
-                is_for_kids_checkbox.click()
-
-            time.sleep(0.5)
-
-            # Click next
-            if verbose:
-                info("\t=> Clicking next...")
-
-            next_button = driver.find_element(By.ID, YOUTUBE_NEXT_BUTTON_ID)
-            next_button.click()
-
-            # Click next again
-            if verbose:
-                info("\t=> Clicking next again...")
-            next_button = driver.find_element(By.ID, YOUTUBE_NEXT_BUTTON_ID)
-            next_button.click()
-
-            # Wait for 2 seconds
-            time.sleep(2)
-
-            # Click next again
-            if verbose:
-                info("\t=> Clicking next again...")
-            next_button = driver.find_element(By.ID, YOUTUBE_NEXT_BUTTON_ID)
-            next_button.click()
-
-            # Set as unlisted
-            if verbose:
-                info("\t=> Setting as unlisted...")
+                error("Browser automation upload not implemented")
+                return False
             
-            radio_button = driver.find_elements(By.XPATH, YOUTUBE_RADIO_BUTTON_XPATH)
-            radio_button[2].click()
-
-            if verbose:
-                info("\t=> Clicking done button...")
-
-            # Click done button
-            done_button = driver.find_element(By.ID, YOUTUBE_DONE_BUTTON_ID)
-            done_button.click()
-
-            # Wait for 2 seconds
-            time.sleep(2)
-
-            # Get latest video
-            if verbose:
-                info("\t=> Getting video URL...")
-
-            # Get the latest uploaded video URL
-            driver.get(f"https://studio.youtube.com/channel/{self.channel_id}/videos/short")
-            time.sleep(2)
-            videos = driver.find_elements(By.TAG_NAME, "ytcp-video-row")
-            first_video = videos[0]
-            anchor_tag = first_video.find_element(By.TAG_NAME, "a")
-            href = anchor_tag.get_attribute("href")
-            if verbose:
-                info(f"\t=> Extracting video ID from URL: {href}")
-            video_id = href.split("/")[-2]
-
-            # Build URL
-            url = build_url(video_id)
-
-            self.uploaded_video_url = url
-
-            if verbose:
-                success(f" => Uploaded Video: {url}")
-
-            # Add video to cache
-            self.add_video({
-                "title": self.metadata["title"],
-                "description": self.metadata["description"],
-                "url": url,
-                "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-
-            # Export metadata after successful upload
-            self.export_metadata()
-
-            # Close the browser
-            driver.quit()
-
-            return True
-        except:
-            self.browser.quit()
+        except HttpError as e:
+            error(f"HTTP error during upload: {e.resp.status} - {e.content}")
+            return False
+        except Exception as e:
+            error(f"Error during upload: {str(e)}")
             return False
 
     def validate_audio_file(self, audio_path: str, min_duration: float = 1.0) -> bool:
@@ -2084,4 +2255,151 @@ Rules:
         except Exception as e:
             if get_verbose():
                 error(f"Audio validation failed: {str(e)}")
+            return False
+
+    def verify_api_access(self) -> bool:
+        """
+        Verifies that the YouTube API credentials are valid and working.
+        
+        Returns:
+            bool: True if API access is verified, False otherwise
+        """
+        try:
+            if get_verbose():
+                info("Verifying YouTube API access...")
+
+            if not os.path.exists(self.CLIENT_SECRETS_FILE):
+                if get_verbose():
+                    warning("No client_secrets.json found, API access not available")
+                return False
+
+            # Try to get authenticated service
+            service = self._get_authenticated_service()
+            
+            # Test the service with a simple API call
+            channels_response = service.channels().list(
+                part='snippet',
+                mine=True
+            ).execute()
+            
+            if not channels_response.get('items'):
+                error("No channels found for authenticated user")
+                return False
+                
+            if get_verbose():
+                success("YouTube API access verified successfully")
+                
+            # Store the service for reuse
+            self._youtube_service = service
+            self.using_api = True
+            return True
+            
+        except HttpError as e:
+            error(f"HTTP error during API verification: {e.resp.status} - {e.content}")
+            return False
+        except Exception as e:
+            error(f"Error verifying API access: {str(e)}")
+            return False
+
+    def sync_video_history(self) -> bool:
+        """
+        Syncs the local video cache with the actual YouTube channel history.
+        Fills in any missing videos and maintains reverse chronological order.
+        
+        Returns:
+            bool: True if sync was successful, False otherwise
+        """
+        try:
+            if not self.using_api:
+                if get_verbose():
+                    warning("Cannot sync video history without API access")
+                return False
+
+            if get_verbose():
+                info("Syncing video history with YouTube channel...")
+
+            # Get channel ID if we don't have it
+            channel_id = self.get_channel_id()
+            if not channel_id:
+                error("Could not get channel ID")
+                return False
+
+            # Get videos from YouTube API
+            youtube = self._get_authenticated_service()
+            videos = []
+            next_page_token = None
+
+            while True:
+                # Build request for video list
+                request = youtube.search().list(
+                    part="id,snippet",
+                    channelId=channel_id,
+                    maxResults=50,
+                    order="date",
+                    type="video",
+                    pageToken=next_page_token
+                )
+
+                try:
+                    response = request.execute()
+                except HttpError as e:
+                    error(f"HTTP error getting video list: {e.resp.status} - {e.content}")
+                    return False
+
+                # Process each video
+                for item in response.get('items', []):
+                    if item['id']['kind'] == 'youtube#video':
+                        video_id = item['id']['videoId']
+                        title = item['snippet']['title']
+                        description = item['snippet']['description']
+                        published_at = item['snippet']['publishedAt']
+
+                        videos.append({
+                            "title": title,
+                            "description": description,
+                            "url": build_url(video_id),
+                            "date": datetime.strptime(published_at, "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d %H:%M:%S")
+                        })
+
+                next_page_token = response.get('nextPageToken')
+                if not next_page_token:
+                    break
+
+            # Read current cache
+            cache_path = get_youtube_cache_path()
+            with open(cache_path, "r") as file:
+                cache = json.loads(file.read())
+
+            # Find our account in the cache
+            for account in cache["accounts"]:
+                if account["id"] == self._account_uuid:
+                    # Get existing video URLs for deduplication
+                    existing_urls = {v["url"] for v in account["videos"]}
+                    
+                    # Add new videos that aren't in cache
+                    for video in videos:
+                        if video["url"] not in existing_urls:
+                            account["videos"].append(video)
+                            if get_verbose():
+                                info(f"Added missing video: {video['title']}")
+
+                    # Sort all videos by date in reverse chronological order
+                    account["videos"].sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d %H:%M:%S"), reverse=True)
+                    break
+
+            # Save updated cache
+            with open(cache_path, "w") as file:
+                json.dump(cache, file, indent=2)
+
+            if get_verbose():
+                success("Video history sync complete")
+                info(f"Total videos in cache: {len(videos)}")
+
+            return True
+
+        except Exception as e:
+            error(f"Error syncing video history: {str(e)}")
+            if get_verbose():
+                error(f"Error type: {type(e).__name__}")
+                error(f"Stack trace: {traceback.format_exc()}")
             return False
