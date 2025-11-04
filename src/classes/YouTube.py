@@ -1,9 +1,9 @@
 import re
-import g4f
 import json
 import time
 import requests
 import assemblyai as aai
+from mistralai import Mistral
 
 from utils import *
 from cache import *
@@ -103,17 +103,20 @@ class YouTube:
     
     def generate_response(self, prompt: str, model: any = None) -> str:
         """
-        Generates an LLM Response based on a prompt and the user-provided model.
+        Generates an LLM Response based on a prompt using Mistral AI.
 
         Args:
             prompt (str): The prompt to use in the text generation.
+            model (any): Unused parameter (kept for compatibility)
 
         Returns:
-            response (str): The generated AI Repsonse.
+            response (str): The generated AI Response.
         """
-        if not model:
-            return g4f.ChatCompletion.create(
-                model=parse_model(get_model()),
+        try:
+            client = Mistral(api_key=get_mistral_api_key())
+
+            response = client.chat.complete(
+                model="mistral-medium-latest",
                 messages=[
                     {
                         "role": "user",
@@ -121,16 +124,11 @@ class YouTube:
                     }
                 ]
             )
-        else:
-            return g4f.ChatCompletion.create(
-                model=model,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            )
+
+            return response.choices[0].message.content
+        except Exception as e:
+            error(f"Failed to generate response with Mistral AI: {str(e)}")
+            return None
 
     def generate_topic(self) -> str:
         """
@@ -269,7 +267,7 @@ class YouTube:
         {self.script}
         """
 
-        completion = str(self.generate_response(prompt, model=parse_model(get_image_prompt_llm())))\
+        completion = str(self.generate_response(prompt))\
             .replace("```json", "") \
             .replace("```", "")
 
@@ -306,9 +304,9 @@ class YouTube:
 
         return image_prompts
 
-    def generate_image_g4f(self, prompt: str) -> str:
+    def generate_image_venice(self, prompt: str) -> str:
         """
-        Generates an AI Image using G4F with SDXL Turbo.
+        Generates an AI Image using Venice AI with qwen-image.
 
         Args:
             prompt (str): Reference for image generation
@@ -316,46 +314,64 @@ class YouTube:
         Returns:
             path (str): The path to the generated image.
         """
-        print(f"Generating Image using G4F: {prompt}")
-        
+        print(f"Generating Image using Venice AI: {prompt}")
+
         try:
-            from g4f.client import Client
-            
-            client = Client()
-            response = client.images.generate(
-                model="sdxl-turbo",
-                prompt=prompt,
-                response_format="url"
-            )
-            
-            if response and response.data and len(response.data) > 0:
-                # Download image from URL
-                image_url = response.data[0].url
-                image_response = requests.get(image_url)
-                
-                if image_response.status_code == 200:
-                    image_path = os.path.join(ROOT_DIR, ".mp", str(uuid4()) + ".png")
-                    
-                    with open(image_path, "wb") as image_file:
-                        image_file.write(image_response.content)
-                    
-                    if get_verbose():
-                        info(f" => Downloaded Image from {image_url} to \"{image_path}\"\n")
-                    
-                    self.images.append(image_path)
-                    return image_path
+            api_key = get_venice_api_key()
+
+            # Venice AI API endpoint
+            url = "https://api.venice.ai/api/v1/images/generations"
+
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+
+            data = {
+                "model": "qwen-image",
+                "prompt": prompt,
+                "n": 1
+            }
+
+            response = requests.post(url, headers=headers, json=data)
+
+            if response.status_code == 200:
+                response_data = response.json()
+
+                if response_data and "data" in response_data and len(response_data["data"]) > 0:
+                    # Get the image URL from the response
+                    image_url = response_data["data"][0]["url"]
+
+                    # Download the image
+                    image_response = requests.get(image_url)
+
+                    if image_response.status_code == 200:
+                        image_path = os.path.join(ROOT_DIR, ".mp", str(uuid4()) + ".png")
+
+                        with open(image_path, "wb") as image_file:
+                            image_file.write(image_response.content)
+
+                        if get_verbose():
+                            info(f" => Downloaded Image from Venice AI to \"{image_path}\"\n")
+
+                        self.images.append(image_path)
+                        return image_path
+                    else:
+                        if get_verbose():
+                            warning(f"Failed to download image from URL: {image_url}")
+                        return None
                 else:
                     if get_verbose():
-                        warning(f"Failed to download image from URL: {image_url}")
+                        warning("Failed to generate image using Venice AI - no data in response")
                     return None
             else:
                 if get_verbose():
-                    warning("Failed to generate image using G4F - no data in response")
+                    warning(f"Failed to generate image using Venice AI. Status code: {response.status_code}, Response: {response.text}")
                 return None
-                
+
         except Exception as e:
             if get_verbose():
-                warning(f"Failed to generate image using G4F: {str(e)}")
+                warning(f"Failed to generate image using Venice AI: {str(e)}")
             return None
 
     def generate_image_cloudflare(self, prompt: str, worker_url: str) -> str:
@@ -414,9 +430,10 @@ class YouTube:
             error("Account configuration not found")
             return None
 
-        # Check if using G4F or Cloudflare
-        if account_config.get("use_g4f", False):
-            return self.generate_image_g4f(prompt)
+        # Check if using Venice AI or Cloudflare
+        if account_config.get("use_g4f", False) or account_config.get("use_venice", True):
+            # Use Venice AI by default (or if use_g4f was true, we now use Venice)
+            return self.generate_image_venice(prompt)
         else:
             worker_url = account_config.get("worker_url")
             if not worker_url:

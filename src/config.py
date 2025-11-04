@@ -198,6 +198,26 @@ def get_assemblyai_api_key() -> str:
     """
     with open(os.path.join(ROOT_DIR, "config.json"), "r") as file:
         return json.load(file)["assembly_ai_api_key"]
+
+def get_mistral_api_key() -> str:
+    """
+    Gets the Mistral AI API key.
+
+    Returns:
+        key (str): The Mistral AI API key
+    """
+    with open(os.path.join(ROOT_DIR, "config.json"), "r") as file:
+        return json.load(file)["mistral_api_key"]
+
+def get_venice_api_key() -> str:
+    """
+    Gets the Venice AI API key.
+
+    Returns:
+        key (str): The Venice AI API key
+    """
+    with open(os.path.join(ROOT_DIR, "config.json"), "r") as file:
+        return json.load(file)["venice_api_key"]
     
 def equalize_subtitles(srt_path: str, max_chars: int = 10) -> None:
     """

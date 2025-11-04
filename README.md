@@ -93,7 +93,8 @@ MoneyPrinterV2 is licensed under `Affero General Public License v3.0`. See [LICE
 ## Acknowledgments
 
 - [CoquiTTS](https://github.com/coqui-ai/TTS)
-- [gpt4free](https://github.com/xtekky/gpt4free)
+- [Mistral AI](https://mistral.ai/) - Text generation API
+- [Venice AI](https://venice.ai/) - Image generation API
 
 ## Disclaimer
 

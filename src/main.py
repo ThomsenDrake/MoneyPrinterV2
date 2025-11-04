@@ -83,10 +83,10 @@ def main():
                 
                 # Add image generation options
                 info("\n============ IMAGE GENERATION ============", False)
-                print(colored(" 1. G4F (SDXL Turbo)", "cyan"))
+                print(colored(" 1. Venice AI (qwen-image)", "cyan"))
                 print(colored(" 2. Cloudflare Worker", "cyan"))
                 info("=======================================", False)
-                print(colored("\nRecommendation: If you're unsure, select G4F (Option 1) as there's no additional setup", "yellow"))
+                print(colored("\nRecommendation: If you're unsure, select Venice AI (Option 1)", "yellow"))
                 info("=======================================\n", False)
                 
                 image_gen_choice = question(" => Select image generation method (1/2): ")
