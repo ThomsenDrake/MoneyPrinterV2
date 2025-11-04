@@ -2,10 +2,15 @@ version: '3.8'
 
 services:
   moneyprinter:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: moneyprinterv2:latest
+    # Option 1: Use pre-built image from GitHub Container Registry (recommended)
+    image: ghcr.io/thomsendrake/moneyprinterv2:latest
+
+    # Option 2: Build from source (uncomment the lines below and comment out the image line above)
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    # image: moneyprinterv2:latest
+
     container_name: moneyprinterv2
 
     # Interactive terminal for CLI application

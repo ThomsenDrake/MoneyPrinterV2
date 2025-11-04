@@ -11,7 +11,28 @@ This guide explains how to deploy and run MoneyPrinterV2 using Docker containers
 
 ## Quick Start
 
-### 1. Setup Configuration Files
+### Option A: Using Pre-built Image (Fastest)
+
+Pull and run the pre-built image from GitHub Container Registry:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/thomsendrake/moneyprinterv2:latest
+
+# Setup configuration files
+cp .env.example .env
+cp config.example.json config.json
+# Edit .env and config.json with your API keys and settings
+
+# Run with docker-compose
+docker-compose up
+```
+
+### Option B: Build from Source
+
+If you want to build the image yourself or make custom modifications:
+
+#### 1. Setup Configuration Files
 
 Before running the Docker container, you need to set up your configuration files:
 
@@ -30,7 +51,7 @@ cp config.example.json config.json
 - `VENICE_API_KEY` - For image generation
 - `ASSEMBLYAI_API_KEY` - For subtitle generation
 
-### 2. Build the Docker Image
+#### 2. Build the Docker Image
 
 ```bash
 # Build using docker-compose (recommended)
@@ -40,7 +61,7 @@ docker-compose build
 docker build -t moneyprinterv2:latest .
 ```
 
-### 3. Run the Container
+#### 3. Run the Container
 
 ```bash
 # Run with docker-compose (recommended)
@@ -55,6 +76,57 @@ docker run -it --rm \
   -v $(pwd)/songs:/app/songs \
   -v $(pwd)/fonts:/app/fonts \
   moneyprinterv2:latest
+```
+
+## Using the Pre-built Image
+
+The Docker image is automatically built and published to GitHub Container Registry on every push to the main branch.
+
+### First-Time Setup (Repository Owner)
+
+After merging this PR, the GitHub Actions workflow will automatically build and publish the Docker image. You'll need to make the package public so users can pull it:
+
+1. Go to your GitHub repository
+2. Click on "Packages" on the right sidebar (or visit https://github.com/users/ThomsenDrake/packages)
+3. Find the `moneyprinterv2` package
+4. Click "Package settings"
+5. Scroll to "Danger Zone"
+6. Click "Change visibility" and set to "Public"
+7. Connect the package to your repository for better visibility
+
+Once the package is public, anyone can pull it with `docker pull ghcr.io/thomsendrake/moneyprinterv2:latest`
+
+### Available Tags
+
+- `latest` - Latest stable build from main branch
+- `v*.*.*` - Specific version releases (e.g., `v2.0.0`)
+- `main` - Latest commit on main branch
+
+### Pull Commands
+
+```bash
+# Latest stable version
+docker pull ghcr.io/thomsendrake/moneyprinterv2:latest
+
+# Specific version
+docker pull ghcr.io/thomsendrake/moneyprinterv2:v2.0.0
+
+# Latest main branch
+docker pull ghcr.io/thomsendrake/moneyprinterv2:main
+```
+
+### Run Pre-built Image
+
+```bash
+# Quick run (interactive mode)
+docker run -it --rm \
+  --env-file .env \
+  -v $(pwd)/config.json:/app/config.json:ro \
+  -v $(pwd)/cache:/app/cache \
+  -v $(pwd)/output:/app/output \
+  -v $(pwd)/songs:/app/songs \
+  -v $(pwd)/fonts:/app/fonts \
+  ghcr.io/thomsendrake/moneyprinterv2:latest
 ```
 
 ## Docker Compose Configuration
