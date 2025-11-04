@@ -1,5 +1,7 @@
 __pycache__
 config.json
+.env
+.env.local
 .mp/
 venv/
 Songs/

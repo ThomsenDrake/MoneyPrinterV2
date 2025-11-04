@@ -167,7 +167,36 @@ tightvncserver
 
 ## 3. Environment Configuration
 
-### Environment Variables
+### Recommended: Use .env File (Secure)
+
+**For better security and cloud deployment, use environment variables instead of config.json:**
+
+```bash
+# Create .env file from template
+cp .env.example .env
+
+# Edit with your secrets
+nano .env
+```
+
+**See [ENV_SETUP.md](ENV_SETUP.md) for complete guide including:**
+- All environment variables reference
+- Security best practices (Gmail App Passwords, secret rotation)
+- Docker, Kubernetes, and CI/CD integration
+- Migration guide from config.json to .env
+
+**Minimum required variables for cloud setup:**
+```bash
+# .env
+ASSEMBLYAI_API_KEY=your_api_key_here
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=your_app_password_here
+HEADLESS=true
+IMAGEMAGICK_PATH=/usr/bin/convert
+THREADS=4
+```
+
+### System Environment Variables
 ```bash
 # Display for headless Firefox
 export DISPLAY=:99
@@ -262,14 +291,33 @@ docker run -v /host/config:/app/config \
 6. **Network Firewall:** Only allow outbound HTTPS (443), SMTP (587)
 
 ### Secrets Management (Recommended)
-```bash
-# Use secret manager instead of config.json
-export ASSEMBLYAI_API_KEY="xxx"
-export GMAIL_USERNAME="xxx"
-export GMAIL_PASSWORD="xxx"
 
-# Modify config.py to read from env vars as fallback
+**Use .env file for local/cloud deployments:**
+```bash
+# Create .env from template
+cp .env.example .env
+
+# Edit with your secrets (never commit!)
+# See ENV_SETUP.md for complete security guide
 ```
+
+**For production, use cloud secret managers:**
+```bash
+# AWS Secrets Manager
+aws secretsmanager create-secret --name moneyprinter/assemblyai-key --secret-string "xxx"
+
+# Google Cloud Secret Manager
+echo "xxx" | gcloud secrets create assemblyai-key --data-file=-
+
+# Azure Key Vault
+az keyvault secret set --vault-name MyVault --name assemblyai-key --value "xxx"
+```
+
+**See [ENV_SETUP.md](ENV_SETUP.md) for:**
+- Complete .env setup guide
+- Gmail App Password generation
+- Secret rotation best practices
+- Docker, Kubernetes, CI/CD integration
 
 ---
 
@@ -536,15 +584,24 @@ sudo swapon /swapfile
 
 ## 13. Security Checklist
 
+**Secrets Management:**
+- [ ] `.env` and `.env.local` in `.gitignore` (verified)
 - [ ] `config.json` never committed to Git (.gitignore verified)
-- [ ] AssemblyAI API key stored securely
-- [ ] Gmail using App Password, not real password
+- [ ] Created `.env` from `.env.example`
+- [ ] Set `.env` file permissions: `chmod 600 .env`
+- [ ] AssemblyAI API key stored in `.env` or secret manager
+- [ ] Gmail using App Password, not real password (see [ENV_SETUP.md](ENV_SETUP.md))
+- [ ] All secrets in `.env`, not in config.json
+- [ ] Verified no secrets in git history: `git log --all -- .env`
+- [ ] Secrets rotated every 90 days
+
+**Infrastructure Security:**
 - [ ] Firefox profiles backed up separately
 - [ ] Instance firewall allows only outbound 443, 587
 - [ ] SSH key-based authentication (no password login)
 - [ ] Regular security updates: `sudo apt update && sudo apt upgrade`
 - [ ] VPN or IP whitelist for SSH access (optional)
-- [ ] Secrets rotated every 90 days
+- [ ] Monitoring and alerting configured
 
 ---
 
@@ -593,12 +650,25 @@ cd MoneyPrinterV2
 python3.9 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r requirements.txt python-dotenv
 
-# Create config from example
+# Create config and .env from examples
 cp config.example.json config.json
+cp .env.example .env
 
-echo "Setup complete! Edit config.json with your settings, then run:"
+# Secure .env file
+chmod 600 .env
+
+echo "Setup complete!"
+echo ""
+echo "IMPORTANT: Edit .env with your secrets (recommended):"
+echo "  nano .env"
+echo "  # See ENV_SETUP.md for detailed guide"
+echo ""
+echo "Or edit config.json (legacy method):"
+echo "  nano config.json"
+echo ""
+echo "Then run:"
 echo "  source venv/bin/activate"
 echo "  python src/main.py"
 ```
