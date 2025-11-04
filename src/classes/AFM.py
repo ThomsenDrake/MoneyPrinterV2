@@ -1,4 +1,4 @@
-import g4f
+from mistralai import Mistral
 
 from status import *
 from config import *
@@ -91,7 +91,7 @@ class AffiliateMarketing:
 
     def generate_response(self, prompt: str) -> str:
         """
-        This method will be used to generate the response for the user.
+        This method will be used to generate the response for the user using Mistral AI.
 
         Args:
             prompt (str): The prompt for the user.
@@ -99,19 +99,26 @@ class AffiliateMarketing:
         Returns:
             response (str): The response for the user.
         """
-        # Generate the response
-        response: str = g4f.ChatCompletion.create(
-            model=parse_model(get_model()),
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
+        try:
+            # Generate the response using Mistral AI
+            client = Mistral(api_key=get_mistral_api_key())
 
-        # Return the response
-        return response
+            response = client.chat.complete(
+                model="mistral-medium-latest",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+
+            # Return the response
+            return response.choices[0].message.content
+
+        except Exception as e:
+            error(f"Failed to generate response with Mistral AI: {str(e)}")
+            return None
 
     def generate_pitch(self) -> str:
         """

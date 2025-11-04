@@ -1,7 +1,7 @@
 import re
-import g4f
 import sys
 import time
+from mistralai import Mistral
 
 from cache import *
 from config import *
@@ -170,34 +170,43 @@ class Twitter:
 
     def generate_post(self) -> str:
         """
-        Generates a post for the Twitter account based on the topic.
+        Generates a post for the Twitter account based on the topic using Mistral AI.
 
         Returns:
             post (str): The post
         """
-        completion = g4f.ChatCompletion.create(
-            model=parse_model(get_model()),
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Generate a Twitter post about: {self.topic} in {get_twitter_language()}. The Limit is 2 sentences. Choose a specific sub-topic of the provided topic."
-                }
-            ]
-        )
+        try:
+            client = Mistral(api_key=get_mistral_api_key())
 
-        if get_verbose():
-            info("Generating a post...")
+            response = client.chat.complete(
+                model="mistral-medium-latest",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Generate a Twitter post about: {self.topic} in {get_twitter_language()}. The Limit is 2 sentences. Choose a specific sub-topic of the provided topic."
+                    }
+                ]
+            )
 
-        if completion is None:
-            error("Failed to generate a post. Please try again.")
+            if get_verbose():
+                info("Generating a post...")
+
+            completion = response.choices[0].message.content
+
+            if completion is None:
+                error("Failed to generate a post. Please try again.")
+                sys.exit(1)
+
+            # Apply Regex to remove all *
+            completion = re.sub(r"\*", "", completion).replace("\"", "")
+
+            if get_verbose():
+                info(f"Length of post: {len(completion)}")
+            if len(completion) >= 260:
+                return self.generate_post()
+
+            return completion
+
+        except Exception as e:
+            error(f"Failed to generate post with Mistral AI: {str(e)}")
             sys.exit(1)
-
-        # Apply Regex to remove all *
-        completion = re.sub(r"\*", "", completion).replace("\"", "")
-    
-        if get_verbose():
-            info(f"Length of post: {len(completion)}")
-        if len(completion) >= 260:
-            return self.generate_post()
-
-        return completion
