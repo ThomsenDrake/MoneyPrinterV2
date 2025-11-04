@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  moneyprinter:
+    # Option 1: Use pre-built image from GitHub Container Registry (recommended)
+    image: ghcr.io/thomsendrake/moneyprinterv2:latest
+
+    # Option 2: Build from source (uncomment the lines below and comment out the image line above)
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    # image: moneyprinterv2:latest
+
+    container_name: moneyprinterv2
+
+    # Interactive terminal for CLI application
+    stdin_open: true
+    tty: true
+
+    # Environment variables from .env file
+    env_file:
+      - .env
+
+    # Mount volumes for persistent data
+    volumes:
+      # Configuration files
+      - ./config.json:/app/config.json:ro
+      - ./.env:/app/.env:ro
+
+      # Persistent data directories
+      - ./cache:/app/cache
+      - ./songs:/app/songs
+      - ./fonts:/app/fonts
+      - ./output:/app/output
+      - ./temp:/app/temp
+
+      # Optional: Mount Firefox profile if you have one
+      # - ~/.mozilla:/home/mpv2user/.mozilla:ro
+
+      # Optional: Mount custom resources
+      # - ./outreach_message.html:/app/outreach_message.html:ro
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 2G
+
+    # Network mode (default bridge is fine for most cases)
+    # For accessing localhost services, use: network_mode: "host"
+    networks:
+      - moneyprinter-network
+
+# Define networks
+networks:
+  moneyprinter-network:
+    driver: bridge
+
+# Define volumes for persistence (optional, if you want Docker-managed volumes)
+# volumes:
+#   cache-data:
+#   output-data:
