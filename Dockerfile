@@ -35,8 +35,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install geckodriver for Firefox automation
-RUN GECKODRIVER_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep 'tag_name' | cut -d '"' -f 4) && \
+# Install geckodriver for Firefox automation (pinned version for faster builds)
+RUN GECKODRIVER_VERSION=v0.35.0 && \
     wget -q https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VERSION}/geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz && \
     tar -xzf geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz -C /usr/local/bin && \
     chmod +x /usr/local/bin/geckodriver && \
@@ -49,8 +49,10 @@ RUN sed -i 's/<policy domain="path" rights="none" pattern="@\*"\/>/<!-- <policy 
 COPY requirements.txt .
 
 # Upgrade pip and install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip wheel && \
-    pip install --no-cache-dir -r requirements.txt
+# Install in a single layer with proper caching for faster builds
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip wheel setuptools && \
+    pip install -r requirements.txt
 
 # Copy application code
 COPY . .

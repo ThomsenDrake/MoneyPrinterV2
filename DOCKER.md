@@ -98,9 +98,11 @@ Once the package is public, anyone can pull it with `docker pull ghcr.io/thomsen
 
 ### Available Tags
 
-- `latest` - Latest stable build from main branch
+- `latest` - Latest stable build from main branch (linux/amd64)
 - `v*.*.*` - Specific version releases (e.g., `v2.0.0`)
 - `main` - Latest commit on main branch
+
+**Note:** Images are currently built for `linux/amd64` only for faster build times. ARM64 support (for M1/M2 Macs) can be added if there's demand. ARM Mac users can still run the amd64 images using Docker's emulation, though performance may be slightly reduced.
 
 ### Pull Commands
 
