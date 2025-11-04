@@ -37,6 +37,28 @@ If you would like to submit your own version/fork of MoneyPrinter, please open a
 
 ## Installation
 
+### Option 1: Docker (Recommended)
+
+The easiest way to run MoneyPrinterV2 is using Docker. This approach handles all dependencies automatically:
+
+```bash
+git clone https://github.com/FujiwaraChoki/MoneyPrinterV2.git
+cd MoneyPrinterV2
+
+# Setup configuration files
+cp .env.example .env
+cp config.example.json config.json
+# Edit .env and config.json with your API keys and settings
+
+# Build and run with Docker Compose
+docker-compose build
+docker-compose run --rm moneyprinter
+```
+
+For detailed Docker instructions, see [DOCKER.md](DOCKER.md).
+
+### Option 2: Local Installation
+
 Please install [Microsoft Visual C++ build tools](https://visualstudio.microsoft.com/de/visual-cpp-build-tools/) first, so that CoquiTTS can function correctly.
 
 > ⚠️ If you are planning to reach out to scraped businesses per E-Mail, please first install the [Go Programming Language](https://golang.org/).

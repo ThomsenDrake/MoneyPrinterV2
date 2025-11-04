@@ -1,0 +1,78 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation (keep essential docs in the image)
+docs/
+*.md
+!README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Docker files (no need to copy these into the image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.log
+
+# Output directories (will be mounted as volumes)
+output/
+cache/
+
+# Environment files with secrets (will be mounted or passed as env vars)
+.env
+.env.*
+config.json
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Large binary files that aren't needed
+*.mp4
+*.mp3
+*.wav
+*.avi
+*.mov
+
+# Test files
+tests/
+test_*.py
+*_test.py
