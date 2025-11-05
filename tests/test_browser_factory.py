@@ -133,7 +133,12 @@ class TestBrowserFactory:
     @patch("browser_factory.GeckoDriverManager")
     @patch("browser_factory.Options")
     def test_create_firefox_browser_exception(
-        self, mock_options_class, mock_gecko_manager, mock_service_class, mock_profile_class, mock_firefox
+        self,
+        mock_options_class,
+        mock_gecko_manager,
+        mock_service_class,
+        mock_profile_class,
+        mock_firefox,
     ):
         """Test handling exception during browser creation."""
         from browser_factory import BrowserFactory

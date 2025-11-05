@@ -156,8 +156,9 @@ class TestFetchSongs:
 
         # Mock response with actual zip content
         import io
+
         mock_zip_bytes = io.BytesIO()
-        with zipfile.ZipFile(mock_zip_bytes, 'w') as zf:
+        with zipfile.ZipFile(mock_zip_bytes, "w") as zf:
             zf.writestr("test_song.mp3", "fake audio data")
         mock_zip_bytes.seek(0)
 
@@ -205,7 +206,7 @@ class TestChooseRandomSong:
 
     def test_choose_random_song_success(self, temp_dir):
         """Test choosing a random song successfully."""
-        import config
+        import utils
         from utils import choose_random_song
 
         # Setup Songs directory with files
@@ -215,7 +216,7 @@ class TestChooseRandomSong:
         (songs_dir / "song2.mp3").write_text("music2")
         (songs_dir / "song3.mp3").write_text("music3")
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(utils, "ROOT_DIR", str(temp_dir)):
             result = choose_random_song()
 
         assert result is not None
@@ -224,7 +225,7 @@ class TestChooseRandomSong:
 
     def test_choose_random_song_multiple_calls(self, temp_dir):
         """Test that multiple calls can return different songs."""
-        import config
+        import utils
         from utils import choose_random_song
 
         # Setup Songs directory with multiple files
@@ -233,7 +234,7 @@ class TestChooseRandomSong:
         for i in range(10):
             (songs_dir / f"song{i}.mp3").write_text(f"music{i}")
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(utils, "ROOT_DIR", str(temp_dir)):
             results = [choose_random_song() for _ in range(5)]
 
         # All results should be valid paths
