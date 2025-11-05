@@ -151,11 +151,11 @@ class TestFetchSongs:
 
     def test_fetch_songs_downloads_and_extracts(self, temp_dir):
         """Test that fetch_songs downloads and extracts songs."""
-        import utils
-        from utils import fetch_songs
-
         # Mock response with actual zip content
         import io
+
+        import utils
+        from utils import fetch_songs
 
         mock_zip_bytes = io.BytesIO()
         with zipfile.ZipFile(mock_zip_bytes, "w") as zf:
