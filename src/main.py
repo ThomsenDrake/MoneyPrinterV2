@@ -14,8 +14,14 @@ from classes.Twitter import Twitter
 from classes.YouTube import YouTube
 from config import *
 from constants import *
+
+# Initialize logging framework
+from logger import setup_logger
 from status import *
 from utils import *
+
+# Get logger for main module
+logger = setup_logger(__name__)
 
 
 def main():
@@ -42,7 +48,6 @@ def main():
         None"""
 
     # Get user input
-    # user_input = int(question("Select an option: "))
     valid_input = False
     while not valid_input:
         try:

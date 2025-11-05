@@ -23,6 +23,17 @@ YOUTUBE_NEXT_BUTTON_ID = "next-button"
 YOUTUBE_RADIO_BUTTON_XPATH = '//*[@id="radioLabel"]'
 YOUTUBE_DONE_BUTTON_ID = "done-button"
 
-# Amazon Section (AFM)$
+# Amazon Section (AFM)
 AMAZON_PRODUCT_TITLE_ID = "productTitle"
 AMAZON_FEATURE_BULLETS_ID = "feature-bullets"
+
+# Video Generation Configuration
+SCRIPT_TO_PROMPTS_RATIO = 3  # One image prompt per 3 script words
+MAX_PROMPTS_G4F = 25  # Maximum prompts when using G4F
+SUBTITLE_FONTSIZE = 100  # Font size for video subtitles
+SUBTITLE_MAX_CHARS = 10  # Maximum characters per subtitle line
+
+# Selenium Wait Timeouts (seconds)
+DEFAULT_WAIT_TIMEOUT = 10  # Default wait for elements
+UPLOAD_WAIT_TIMEOUT = 60  # Timeout for video upload completion
+VIDEO_LIST_WAIT_TIMEOUT = 15  # Timeout for video list to load

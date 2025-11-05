@@ -11,6 +11,8 @@ from selenium.webdriver.common import keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium_firefox import *
 from termcolor import colored
 from webdriver_manager.firefox import GeckoDriverManager
@@ -79,35 +81,45 @@ class Twitter:
 
         bot.get("https://twitter.com")
 
-        time.sleep(2)
+        # Wait for page to load
+        WebDriverWait(bot, DEFAULT_WAIT_TIMEOUT).until(
+            EC.presence_of_element_located(
+                (By.XPATH, "//a[@data-testid='SideNav_NewTweet_Button']")
+            )
+        )
 
         post_content: str = self.generate_post()
         now: datetime = datetime.now()
 
         print(colored(f" => Posting to Twitter:", "blue"), post_content[:30] + "...")
 
-        try:
-            bot.find_element(By.XPATH, "//a[@data-testid='SideNav_NewTweet_Button']").click()
-        except exceptions.NoSuchElementException:
-            time.sleep(3)
-            bot.find_element(By.XPATH, "//a[@data-testid='SideNav_NewTweet_Button']").click()
+        # Click new tweet button with retry
+        new_tweet_button = WebDriverWait(bot, DEFAULT_WAIT_TIMEOUT).until(
+            EC.element_to_be_clickable((By.XPATH, "//a[@data-testid='SideNav_NewTweet_Button']"))
+        )
+        new_tweet_button.click()
 
-        time.sleep(2)
+        # Wait for textbox and send keys
         body = post_content if text is None else text
+        textbox = WebDriverWait(bot, DEFAULT_WAIT_TIMEOUT).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@role='textbox']"))
+        )
+        textbox.send_keys(body)
 
-        try:
-            bot.find_element(By.XPATH, "//div[@role='textbox']").send_keys(body)
-        except exceptions.NoSuchElementException:
-            time.sleep(2)
-            bot.find_element(By.XPATH, "//div[@role='textbox']").send_keys(body)
-
-        time.sleep(1)
+        # Wait for tweet button to be clickable
+        WebDriverWait(bot, DEFAULT_WAIT_TIMEOUT).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='tweetButton']"))
+        )
         bot.find_element(By.CLASS_NAME, "notranslate").send_keys(keys.Keys.ENTER)
         bot.find_element(By.XPATH, "//button[@data-testid='tweetButton']").click()
 
         if verbose:
             print(colored(" => Pressed [ENTER] Button on Twitter..", "blue"))
-        time.sleep(4)
+
+        # Wait for post to complete
+        WebDriverWait(bot, DEFAULT_WAIT_TIMEOUT).until(
+            lambda d: len(d.find_elements(By.XPATH, "//button[@data-testid='tweetButton']")) == 0
+        )
 
         # Add the post to the cache
         self.add_post({"content": post_content, "date": now.strftime("%m/%d/%Y, %H:%M:%S")})
