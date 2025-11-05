@@ -3,7 +3,7 @@
 
 wheel==0.42.0
 termcolor==2.4.0
-schedule==1.2.1
+schedule==1.2.2
 TTS==0.22.0
 prettytable==3.9.0
 
