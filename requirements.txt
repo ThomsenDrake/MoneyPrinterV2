@@ -2,7 +2,7 @@
 # Updated: 2025-11-05
 
 wheel==0.42.0
-termcolor==2.4.0
+termcolor==3.1.0
 schedule==1.2.1
 TTS==0.22.0
 prettytable==3.9.0
