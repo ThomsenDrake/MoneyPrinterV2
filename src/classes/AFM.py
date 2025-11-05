@@ -1,3 +1,6 @@
+import logging
+from typing import Optional, Any
+
 from mistralai import Mistral
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -74,6 +77,31 @@ class AffiliateMarketing:
 
         # Scrape the product information
         self.scrape_product_information()
+
+    def __enter__(self) -> "AffiliateMarketing":
+        """
+        Context manager entry point.
+
+        Returns:
+            AffiliateMarketing: This instance for use in with statement.
+        """
+        return self
+
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception], exc_tb: Optional[Any]) -> None:
+        """
+        Context manager exit point - ensures browser cleanup.
+
+        Args:
+            exc_type: Exception type if an exception occurred
+            exc_val: Exception value if an exception occurred
+            exc_tb: Exception traceback if an exception occurred
+        """
+        try:
+            if hasattr(self, 'browser') and self.browser:
+                self.browser.quit()
+                logging.info("Browser instance closed successfully")
+        except Exception as e:
+            logging.warning(f"Error while closing browser: {str(e)}")
 
     def scrape_product_information(self) -> None:
         """

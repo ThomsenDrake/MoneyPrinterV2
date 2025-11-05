@@ -1,7 +1,8 @@
+import logging
 import re
 import sys
 from datetime import datetime
-from typing import List
+from typing import List, Optional, Any
 
 from mistralai import Mistral
 from selenium import webdriver
@@ -63,6 +64,31 @@ class Twitter:
         self.browser: webdriver.Firefox = webdriver.Firefox(
             service=self.service, options=self.options
         )
+
+    def __enter__(self) -> "Twitter":
+        """
+        Context manager entry point.
+
+        Returns:
+            Twitter: This instance for use in with statement.
+        """
+        return self
+
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception], exc_tb: Optional[Any]) -> None:
+        """
+        Context manager exit point - ensures browser cleanup.
+
+        Args:
+            exc_type: Exception type if an exception occurred
+            exc_val: Exception value if an exception occurred
+            exc_tb: Exception traceback if an exception occurred
+        """
+        try:
+            if hasattr(self, 'browser') and self.browser:
+                self.browser.quit()
+                logging.info("Browser instance closed successfully")
+        except Exception as e:
+            logging.warning(f"Error while closing browser: {str(e)}")
 
     def post(self, text: str = None) -> None:
         """
