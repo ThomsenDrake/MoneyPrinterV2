@@ -1,4 +1,9 @@
+import logging
+
 from termcolor import colored
+
+# Get logger for status messages
+_logger = logging.getLogger("moneyprinter.status")
 
 
 def error(message: str, show_emoji: bool = True) -> None:
@@ -14,6 +19,8 @@ def error(message: str, show_emoji: bool = True) -> None:
     """
     emoji = "❌" if show_emoji else ""
     print(colored(f"{emoji} {message}", "red"))
+    # Also log to the logging framework
+    _logger.error(message)
 
 
 def success(message: str, show_emoji: bool = True) -> None:
@@ -29,6 +36,8 @@ def success(message: str, show_emoji: bool = True) -> None:
     """
     emoji = "✅" if show_emoji else ""
     print(colored(f"{emoji} {message}", "green"))
+    # Also log to the logging framework
+    _logger.info(message)
 
 
 def info(message: str, show_emoji: bool = True) -> None:
@@ -44,6 +53,8 @@ def info(message: str, show_emoji: bool = True) -> None:
     """
     emoji = "ℹ️" if show_emoji else ""
     print(colored(f"{emoji} {message}", "magenta"))
+    # Also log to the logging framework
+    _logger.info(message)
 
 
 def warning(message: str, show_emoji: bool = True) -> None:
@@ -59,6 +70,8 @@ def warning(message: str, show_emoji: bool = True) -> None:
     """
     emoji = "⚠️" if show_emoji else ""
     print(colored(f"{emoji} {message}", "yellow"))
+    # Also log to the logging framework
+    _logger.warning(message)
 
 
 def question(message: str, show_emoji: bool = True) -> str:
@@ -73,4 +86,7 @@ def question(message: str, show_emoji: bool = True) -> str:
         user_input (str): The user's input
     """
     emoji = "❓" if show_emoji else ""
-    return input(colored(f"{emoji} {message}", "magenta"))
+    _logger.debug(f"User prompt: {message}")
+    user_input = input(colored(f"{emoji} {message}", "magenta"))
+    _logger.debug(f"User response: {user_input}")
+    return user_input

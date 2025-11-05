@@ -36,3 +36,7 @@ dmypy.json
 .idea/
 *.swp
 *.swo
+
+# Logs
+logs/
+*.log

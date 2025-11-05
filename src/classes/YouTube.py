@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-import time
 from datetime import datetime
 from typing import List
 from uuid import uuid4
@@ -18,6 +17,8 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium_firefox import *
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from termcolor import colored
@@ -246,11 +247,11 @@ class YouTube:
                 break
 
         # Calculate number of prompts based on script length
-        base_n_prompts = len(self.script) / 3
+        base_n_prompts = len(self.script) / SCRIPT_TO_PROMPTS_RATIO
 
-        # If using G4F, limit to 25 prompts
+        # If using G4F, limit to MAX_PROMPTS_G4F
         if account_config and account_config.get("use_g4f", False):
-            n_prompts = min(base_n_prompts, 25)
+            n_prompts = min(base_n_prompts, MAX_PROMPTS_G4F)
         else:
             n_prompts = base_n_prompts
 
@@ -569,7 +570,7 @@ class YouTube:
         generator = lambda txt: TextClip(
             txt,
             font=os.path.join(get_fonts_dir(), get_font()),
-            fontsize=100,
+            fontsize=SUBTITLE_FONTSIZE,
             color="#FFFF00",
             stroke_color="black",
             stroke_width=5,
@@ -612,9 +613,6 @@ class YouTube:
                     )
                 clip = clip.resize((1080, 1920))
 
-                # FX (Fade In)
-                # clip = clip.fadein(2)
-
                 clips.append(clip)
                 tot_dur += clip.duration
 
@@ -625,7 +623,7 @@ class YouTube:
         subtitles_path = self.generate_subtitles(self.tts_path)
 
         # Equalize srt file
-        equalize_subtitles(subtitles_path, 10)
+        equalize_subtitles(subtitles_path, SUBTITLE_MAX_CHARS)
 
         # Burn the subtitles into the video
         subtitles = SubtitlesClip(subtitles_path, generator)
@@ -697,7 +695,8 @@ class YouTube:
         """
         driver = self.browser
         driver.get("https://studio.youtube.com")
-        time.sleep(2)
+        # Wait for page to load by checking URL contains "channel"
+        WebDriverWait(driver, DEFAULT_WAIT_TIMEOUT).until(lambda d: "channel" in d.current_url)
         channel_id = driver.current_url.split("/")[-1]
         self.channel_id = channel_id
 
@@ -726,8 +725,10 @@ class YouTube:
             file_input = file_picker.find_element(By.TAG_NAME, INPUT_TAG)
             file_input.send_keys(self.video_path)
 
-            # Wait for upload to finish
-            time.sleep(5)
+            # Wait for upload to finish - textboxes appear when ready
+            WebDriverWait(driver, UPLOAD_WAIT_TIMEOUT).until(
+                EC.presence_of_element_located((By.ID, YOUTUBE_TEXTBOX_ID))
+            )
 
             # Set title
             textboxes = driver.find_elements(By.ID, YOUTUBE_TEXTBOX_ID)
@@ -738,27 +739,31 @@ class YouTube:
             if verbose:
                 info("\t=> Setting title...")
 
+            # Wait for title element to be clickable
+            WebDriverWait(driver, DEFAULT_WAIT_TIMEOUT).until(EC.element_to_be_clickable(title_el))
             title_el.click()
-            time.sleep(1)
             title_el.clear()
             title_el.send_keys(self.metadata["title"])
 
             if verbose:
                 info("\t=> Setting description...")
 
-            # Set description
-            time.sleep(10)
+            # Set description - wait for it to be clickable
+            WebDriverWait(driver, DEFAULT_WAIT_TIMEOUT).until(
+                EC.element_to_be_clickable(description_el)
+            )
             description_el.click()
-            time.sleep(0.5)
             description_el.clear()
             description_el.send_keys(self.metadata["description"])
-
-            time.sleep(0.5)
 
             # Set `made for kids` option
             if verbose:
                 info("\t=> Setting `made for kids` option...")
 
+            # Wait for kids option checkboxes to be present
+            WebDriverWait(driver, DEFAULT_WAIT_TIMEOUT).until(
+                EC.presence_of_element_located((By.NAME, YOUTUBE_MADE_FOR_KIDS_NAME))
+            )
             is_for_kids_checkbox = driver.find_element(By.NAME, YOUTUBE_MADE_FOR_KIDS_NAME)
             is_not_for_kids_checkbox = driver.find_element(By.NAME, YOUTUBE_NOT_MADE_FOR_KIDS_NAME)
 
@@ -767,46 +772,51 @@ class YouTube:
             else:
                 is_for_kids_checkbox.click()
 
-            time.sleep(0.5)
-
             # Click next
             if verbose:
                 info("\t=> Clicking next...")
 
-            next_button = driver.find_element(By.ID, YOUTUBE_NEXT_BUTTON_ID)
+            # Wait for next button to be clickable
+            next_button = WebDriverWait(driver, DEFAULT_WAIT_TIMEOUT).until(
+                EC.element_to_be_clickable((By.ID, YOUTUBE_NEXT_BUTTON_ID))
+            )
             next_button.click()
 
             # Click next again
             if verbose:
                 info("\t=> Clicking next again...")
-            next_button = driver.find_element(By.ID, YOUTUBE_NEXT_BUTTON_ID)
+            next_button = WebDriverWait(driver, DEFAULT_WAIT_TIMEOUT).until(
+                EC.element_to_be_clickable((By.ID, YOUTUBE_NEXT_BUTTON_ID))
+            )
             next_button.click()
 
-            # Wait for 2 seconds
-            time.sleep(2)
-
-            # Click next again
+            # Click next again (third time)
             if verbose:
                 info("\t=> Clicking next again...")
-            next_button = driver.find_element(By.ID, YOUTUBE_NEXT_BUTTON_ID)
+            next_button = WebDriverWait(driver, DEFAULT_WAIT_TIMEOUT).until(
+                EC.element_to_be_clickable((By.ID, YOUTUBE_NEXT_BUTTON_ID))
+            )
             next_button.click()
 
             # Set as unlisted
             if verbose:
                 info("\t=> Setting as unlisted...")
 
+            # Wait for radio buttons to be present
+            WebDriverWait(driver, DEFAULT_WAIT_TIMEOUT).until(
+                EC.presence_of_all_elements_located((By.XPATH, YOUTUBE_RADIO_BUTTON_XPATH))
+            )
             radio_button = driver.find_elements(By.XPATH, YOUTUBE_RADIO_BUTTON_XPATH)
             radio_button[2].click()
 
             if verbose:
                 info("\t=> Clicking done button...")
 
-            # Click done button
-            done_button = driver.find_element(By.ID, YOUTUBE_DONE_BUTTON_ID)
+            # Click done button - wait for it to be clickable
+            done_button = WebDriverWait(driver, DEFAULT_WAIT_TIMEOUT).until(
+                EC.element_to_be_clickable((By.ID, YOUTUBE_DONE_BUTTON_ID))
+            )
             done_button.click()
-
-            # Wait for 2 seconds
-            time.sleep(2)
 
             # Get latest video
             if verbose:
@@ -814,7 +824,10 @@ class YouTube:
 
             # Get the latest uploaded video URL
             driver.get(f"https://studio.youtube.com/channel/{self.channel_id}/videos/short")
-            time.sleep(2)
+            # Wait for video rows to be present
+            WebDriverWait(driver, VIDEO_LIST_WAIT_TIMEOUT).until(
+                EC.presence_of_element_located((By.TAG_NAME, "ytcp-video-row"))
+            )
             videos = driver.find_elements(By.TAG_NAME, "ytcp-video-row")
             first_video = videos[0]
             anchor_tag = first_video.find_element(By.TAG_NAME, "a")
