@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from datetime import datetime
-from typing import List
+from typing import Any, List, Optional
 from uuid import uuid4
 
 import assemblyai as aai
@@ -98,6 +98,33 @@ class YouTube:
             service=self.service, options=self.options
         )
 
+    def __enter__(self) -> "YouTube":
+        """
+        Context manager entry point.
+
+        Returns:
+            YouTube: This instance for use in with statement.
+        """
+        return self
+
+    def __exit__(
+        self, exc_type: Optional[type], exc_val: Optional[Exception], exc_tb: Optional[Any]
+    ) -> None:
+        """
+        Context manager exit point - ensures browser cleanup.
+
+        Args:
+            exc_type: Exception type if an exception occurred
+            exc_val: Exception value if an exception occurred
+            exc_tb: Exception traceback if an exception occurred
+        """
+        try:
+            if hasattr(self, "browser") and self.browser:
+                self.browser.quit()
+                logging.info("Browser instance closed successfully")
+        except Exception as e:
+            logging.warning(f"Error while closing browser: {str(e)}")
+
     @property
     def niche(self) -> str:
         """
@@ -118,16 +145,16 @@ class YouTube:
         """
         return self._language
 
-    def generate_response(self, prompt: str, model: any = None) -> str:
+    def generate_response(self, prompt: str, model: Optional[str] = None) -> Optional[str]:
         """
         Generates an LLM Response based on a prompt using Mistral AI.
 
         Args:
             prompt (str): The prompt to use in the text generation.
-            model (any): Unused parameter (kept for compatibility)
+            model (Optional[str]): Unused parameter (kept for compatibility)
 
         Returns:
-            response (str): The generated AI Response.
+            Optional[str]: The generated AI Response, or None on error.
         """
         try:
             client = Mistral(api_key=get_mistral_api_key())
@@ -322,17 +349,17 @@ class YouTube:
         retry=retry_if_exception_type((requests.RequestException, requests.Timeout)),
         reraise=True,
     )
-    def _make_http_request_with_retry(self, method: str, url: str, **kwargs):
+    def _make_http_request_with_retry(self, method: str, url: str, **kwargs) -> requests.Response:
         """
         Make HTTP request with automatic retry on transient failures.
 
         Args:
-            method: HTTP method (GET, POST, etc.)
-            url: URL to request
+            method (str): HTTP method (GET, POST, etc.)
+            url (str): URL to request
             **kwargs: Additional arguments for requests
 
         Returns:
-            Response object
+            requests.Response: The response object
         """
         if get_verbose():
             logging.info(f"Making {method} request to {url}")

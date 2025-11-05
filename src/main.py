@@ -1,4 +1,5 @@
 import subprocess
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
 import schedule
@@ -19,9 +20,266 @@ from constants import *
 from logger import setup_logger
 from status import *
 from utils import *
+from validation import validate_choice, validate_integer, validate_non_empty_string
 
 # Get logger for main module
 logger = setup_logger(__name__)
+
+
+def get_user_choice(options: list) -> int:
+    """
+    Display menu options and get validated user choice.
+
+    Args:
+        options (list): List of menu options to display
+
+    Returns:
+        int: The selected option number (1-indexed)
+
+    Raises:
+        ValueError: If input is invalid
+    """
+    info("\n============ OPTIONS ============", False)
+    for idx, option in enumerate(options):
+        print(colored(f" {idx + 1}. {option}", "cyan"))
+    info("=================================\n", False)
+
+    user_input = input("Select an option: ").strip()
+    return validate_integer(user_input, min_value=1, max_value=len(options), field_name="Option")
+
+
+def create_youtube_account() -> Optional[Dict[str, Any]]:
+    """
+    Create a new YouTube account configuration.
+
+    Returns:
+        Optional[Dict[str, Any]]: Account data dictionary, or None if cancelled
+    """
+    generated_uuid = str(uuid4())
+
+    success(f" => Generated ID: {generated_uuid}")
+    nickname = validate_non_empty_string(
+        question(" => Enter a nickname for this account: "), "Nickname"
+    )
+    fp_profile = validate_non_empty_string(
+        question(" => Enter the path to the Firefox profile: "), "Firefox profile path"
+    )
+    niche = validate_non_empty_string(question(" => Enter the account niche: "), "Niche")
+    language = validate_non_empty_string(question(" => Enter the account language: "), "Language")
+
+    # Add image generation options
+    info("\n============ IMAGE GENERATION ============", False)
+    print(colored(" 1. Venice AI (qwen-image)", "cyan"))
+    print(colored(" 2. Cloudflare Worker", "cyan"))
+    info("=======================================", False)
+    print(colored("\nRecommendation: If you're unsure, select Venice AI (Option 1)", "yellow"))
+    info("=======================================\n", False)
+
+    image_gen_choice = validate_choice(
+        question(" => Select image generation method (1/2): "),
+        valid_choices=["1", "2"],
+        field_name="Image generation method",
+    )
+
+    account_data = {
+        "id": generated_uuid,
+        "nickname": nickname,
+        "firefox_profile": fp_profile,
+        "niche": niche,
+        "language": language,
+        "use_g4f": image_gen_choice == "1",
+        "videos": [],
+    }
+
+    if image_gen_choice == "2":
+        worker_url = validate_non_empty_string(
+            question(" => Enter your Cloudflare worker URL for image generation: "), "Worker URL"
+        )
+        account_data["worker_url"] = worker_url
+
+    return account_data
+
+
+def create_twitter_account() -> Optional[Dict[str, Any]]:
+    """
+    Create a new Twitter account configuration.
+
+    Returns:
+        Optional[Dict[str, Any]]: Account data dictionary, or None if cancelled
+    """
+    generated_uuid = str(uuid4())
+
+    success(f" => Generated ID: {generated_uuid}")
+    nickname = validate_non_empty_string(
+        question(" => Enter a nickname for this account: "), "Nickname"
+    )
+    fp_profile = validate_non_empty_string(
+        question(" => Enter the path to the Firefox profile: "), "Firefox profile path"
+    )
+    topic = validate_non_empty_string(question(" => Enter the account topic: "), "Topic")
+
+    return {
+        "id": generated_uuid,
+        "nickname": nickname,
+        "firefox_profile": fp_profile,
+        "topic": topic,
+        "posts": [],
+    }
+
+
+def setup_cron_job(command: str, schedule_option: int, platform: str) -> None:
+    """
+    Set up a scheduled CRON job for automated posting.
+
+    Args:
+        command (str): The command to execute
+        schedule_option (int): The schedule option selected by user
+        platform (str): The platform (youtube or twitter)
+    """
+
+    def job():
+        """Executes the scheduled command."""
+        subprocess.run(command, shell=False)
+
+    if platform == "youtube":
+        if schedule_option == 1:
+            schedule.every(1).day.do(job)
+            success("Set up CRON Job: Upload once per day")
+        elif schedule_option == 2:
+            schedule.every().day.at("10:00").do(job)
+            schedule.every().day.at("16:00").do(job)
+            success("Set up CRON Job: Upload twice per day (10:00, 16:00)")
+    elif platform == "twitter":
+        if schedule_option == 1:
+            schedule.every(1).day.do(job)
+            success("Set up CRON Job: Post once per day")
+        elif schedule_option == 2:
+            schedule.every().day.at("10:00").do(job)
+            schedule.every().day.at("16:00").do(job)
+            success("Set up CRON Job: Post twice per day (10:00, 16:00)")
+        elif schedule_option == 3:
+            schedule.every().day.at("08:00").do(job)
+            schedule.every().day.at("12:00").do(job)
+            schedule.every().day.at("18:00").do(job)
+            success("Set up CRON Job: Post three times per day (08:00, 12:00, 18:00)")
+
+
+def run_youtube_operations(selected_account: Dict[str, Any]) -> None:
+    """
+    Run YouTube automation operations for a selected account.
+
+    Args:
+        selected_account (Dict[str, Any]): The selected YouTube account data
+    """
+    youtube = YouTube(
+        selected_account["id"],
+        selected_account["nickname"],
+        selected_account["firefox_profile"],
+        selected_account["niche"],
+        selected_account["language"],
+    )
+
+    while True:
+        rem_temp_files()
+        user_input = get_user_choice(YOUTUBE_OPTIONS)
+        tts = TTS()
+
+        if user_input == 1:
+            # Generate and optionally upload video
+            youtube.generate_video(tts)
+            upload_to_yt = validate_choice(
+                question("Do you want to upload this video to YouTube? (Yes/No): "),
+                valid_choices=["yes", "no"],
+                case_sensitive=False,
+                field_name="Upload choice",
+            )
+            if upload_to_yt.lower() == "yes":
+                youtube.upload_video()
+
+        elif user_input == 2:
+            # View uploaded videos
+            videos = youtube.get_videos()
+            if len(videos) > 0:
+                videos_table = PrettyTable()
+                videos_table.field_names = ["ID", "Date", "Title"]
+                for video in videos:
+                    videos_table.add_row(
+                        [
+                            videos.index(video) + 1,
+                            colored(video["date"], "blue"),
+                            colored(video["title"][:60] + "...", "green"),
+                        ]
+                    )
+                print(videos_table)
+            else:
+                warning(" No videos found.")
+
+        elif user_input == 3:
+            # Setup CRON job
+            info("How often do you want to upload?")
+            schedule_option = get_user_choice(YOUTUBE_CRON_OPTIONS)
+
+            cron_script_path = os.path.join(ROOT_DIR, "src", "cron.py")
+            command = f"python {cron_script_path} youtube {selected_account['id']}"
+            setup_cron_job(command, schedule_option, "youtube")
+
+        elif user_input == 4:
+            # Exit to main menu
+            if get_verbose():
+                info(" => Climbing Options Ladder...", False)
+            break
+
+
+def run_twitter_operations(selected_account: Dict[str, Any]) -> None:
+    """
+    Run Twitter bot operations for a selected account.
+
+    Args:
+        selected_account (Dict[str, Any]): The selected Twitter account data
+    """
+    twitter = Twitter(
+        selected_account["id"],
+        selected_account["nickname"],
+        selected_account["firefox_profile"],
+        selected_account["topic"],
+    )
+
+    while True:
+        user_input = get_user_choice(TWITTER_OPTIONS)
+
+        if user_input == 1:
+            # Create and post a tweet
+            twitter.post()
+
+        elif user_input == 2:
+            # View post history
+            posts = twitter.get_posts()
+            posts_table = PrettyTable()
+            posts_table.field_names = ["ID", "Date", "Content"]
+            for post in posts:
+                posts_table.add_row(
+                    [
+                        posts.index(post) + 1,
+                        colored(post["date"], "blue"),
+                        colored(post["content"][:60] + "...", "green"),
+                    ]
+                )
+            print(posts_table)
+
+        elif user_input == 3:
+            # Setup CRON job
+            info("How often do you want to post?")
+            schedule_option = get_user_choice(TWITTER_CRON_OPTIONS)
+
+            cron_script_path = os.path.join(ROOT_DIR, "src", "cron.py")
+            command = f"python {cron_script_path} twitter {selected_account['id']}"
+            setup_cron_job(command, schedule_option, "twitter")
+
+        elif user_input == 4:
+            # Exit to main menu
+            if get_verbose():
+                info(" => Climbing Options Ladder...", False)
+            break
 
 
 def main():
@@ -45,85 +303,42 @@ def main():
         None
 
     Returns:
-        None"""
-
-    # Get user input
-    valid_input = False
-    while not valid_input:
-        try:
-            # Show user options
-            info("\n============ OPTIONS ============", False)
-
-            for idx, option in enumerate(OPTIONS):
-                print(colored(f" {idx + 1}. {option}", "cyan"))
-
-            info("=================================\n", False)
-            user_input = input("Select an option: ").strip()
-            if user_input == "":
-                print("\n" * 100)
-                raise ValueError("Empty input is not allowed.")
-            user_input = int(user_input)
-            valid_input = True
-        except ValueError as e:
-            print("\n" * 100)
-            print(f"Invalid input: {e}")
+        None
+    """
+    try:
+        user_input = get_user_choice(OPTIONS)
+    except ValueError as e:
+        error(f"Invalid input: {e}")
+        return
 
     # Start the selected option
     if user_input == 1:
+        # YouTube Shorts Automater
         info("Starting YT Shorts Automater...")
-
         cached_accounts = get_accounts("youtube")
 
         if len(cached_accounts) == 0:
+            # No accounts found - create new one
             warning("No accounts found in cache. Create one now?")
-            user_input = question("Yes/No: ")
+            create_choice = validate_choice(
+                question("Yes/No: "),
+                valid_choices=["yes", "no"],
+                case_sensitive=False,
+                field_name="Create account",
+            )
 
-            if user_input.lower() == "yes":
-                generated_uuid = str(uuid4())
-
-                success(f" => Generated ID: {generated_uuid}")
-                nickname = question(" => Enter a nickname for this account: ")
-                fp_profile = question(" => Enter the path to the Firefox profile: ")
-                niche = question(" => Enter the account niche: ")
-                language = question(" => Enter the account language: ")
-
-                # Add image generation options
-                info("\n============ IMAGE GENERATION ============", False)
-                print(colored(" 1. Venice AI (qwen-image)", "cyan"))
-                print(colored(" 2. Cloudflare Worker", "cyan"))
-                info("=======================================", False)
-                print(
-                    colored(
-                        "\nRecommendation: If you're unsure, select Venice AI (Option 1)", "yellow"
-                    )
-                )
-                info("=======================================\n", False)
-
-                image_gen_choice = question(" => Select image generation method (1/2): ")
-
-                account_data = {
-                    "id": generated_uuid,
-                    "nickname": nickname,
-                    "firefox_profile": fp_profile,
-                    "niche": niche,
-                    "language": language,
-                    "use_g4f": image_gen_choice == "1",
-                    "videos": [],
-                }
-
-                if image_gen_choice == "2":
-                    worker_url = question(
-                        " => Enter your Cloudflare worker URL for image generation: "
-                    )
-                    account_data["worker_url"] = worker_url
-
-                add_account("youtube", account_data)
-
-                success("Account configured successfully!")
+            if create_choice.lower() == "yes":
+                try:
+                    account_data = create_youtube_account()
+                    add_account("youtube", account_data)
+                    success("Account configured successfully!")
+                except ValueError as e:
+                    error(f"Failed to create account: {e}")
+                    return
         else:
+            # Display existing accounts
             table = PrettyTable()
             table.field_names = ["ID", "UUID", "Nickname", "Niche"]
-
             for account in cached_accounts:
                 table.add_row(
                     [
@@ -133,141 +348,48 @@ def main():
                         colored(account["niche"], "green"),
                     ]
                 )
-
             print(table)
 
-            user_input = question("Select an account to start: ")
-
-            selected_account = None
-
-            for account in cached_accounts:
-                if str(cached_accounts.index(account) + 1) == user_input:
-                    selected_account = account
-
-            if selected_account is None:
-                error("Invalid account selected. Please try again.", "red")
-                main()
-            else:
-                youtube = YouTube(
-                    selected_account["id"],
-                    selected_account["nickname"],
-                    selected_account["firefox_profile"],
-                    selected_account["niche"],
-                    selected_account["language"],
+            # Select account
+            try:
+                account_choice = validate_integer(
+                    question("Select an account to start: "),
+                    min_value=1,
+                    max_value=len(cached_accounts),
+                    field_name="Account selection",
                 )
-
-                while True:
-                    rem_temp_files()
-                    info("\n============ OPTIONS ============", False)
-
-                    for idx, youtube_option in enumerate(YOUTUBE_OPTIONS):
-                        print(colored(f" {idx + 1}. {youtube_option}", "cyan"))
-
-                    info("=================================\n", False)
-
-                    # Get user input
-                    user_input = int(question("Select an option: "))
-                    tts = TTS()
-
-                    if user_input == 1:
-                        youtube.generate_video(tts)
-                        upload_to_yt = question(
-                            "Do you want to upload this video to YouTube? (Yes/No): "
-                        )
-                        if upload_to_yt.lower() == "yes":
-                            youtube.upload_video()
-                    elif user_input == 2:
-                        videos = youtube.get_videos()
-
-                        if len(videos) > 0:
-                            videos_table = PrettyTable()
-                            videos_table.field_names = ["ID", "Date", "Title"]
-
-                            for video in videos:
-                                videos_table.add_row(
-                                    [
-                                        videos.index(video) + 1,
-                                        colored(video["date"], "blue"),
-                                        colored(video["title"][:60] + "...", "green"),
-                                    ]
-                                )
-
-                            print(videos_table)
-                        else:
-                            warning(" No videos found.")
-                    elif user_input == 3:
-                        info("How often do you want to upload?")
-
-                        info("\n============ OPTIONS ============", False)
-                        for idx, cron_option in enumerate(YOUTUBE_CRON_OPTIONS):
-                            print(colored(f" {idx + 1}. {cron_option}", "cyan"))
-
-                        info("=================================\n", False)
-
-                        user_input = int(question("Select an Option: "))
-
-                        cron_script_path = os.path.join(ROOT_DIR, "src", "cron.py")
-                        command = f"python {cron_script_path} youtube {selected_account['id']}"
-
-                        def job():
-                            """Executes a shell command using subprocess.run.
-
-                            This function runs a specified shell command using the subprocess module.
-                            The command to be executed should be defined in the 'command' variable.
-
-                            Args:
-                                None
-
-                            Returns:
-                                None"""
-                            subprocess.run(command)
-
-                        if user_input == 1:
-                            # Upload Once
-                            schedule.every(1).day.do(job)
-                            success("Set up CRON Job.")
-                        elif user_input == 2:
-                            # Upload Twice a day
-                            schedule.every().day.at("10:00").do(job)
-                            schedule.every().day.at("16:00").do(job)
-                            success("Set up CRON Job.")
-                        else:
-                            break
-                    elif user_input == 4:
-                        if get_verbose():
-                            info(" => Climbing Options Ladder...", False)
-                        break
+                selected_account = cached_accounts[account_choice - 1]
+                run_youtube_operations(selected_account)
+            except (ValueError, IndexError) as e:
+                error(f"Invalid account selected: {e}")
+                return
     elif user_input == 2:
+        # Twitter Bot
         info("Starting Twitter Bot...")
-
         cached_accounts = get_accounts("twitter")
 
         if len(cached_accounts) == 0:
+            # No accounts found - create new one
             warning("No accounts found in cache. Create one now?")
-            user_input = question("Yes/No: ")
+            create_choice = validate_choice(
+                question("Yes/No: "),
+                valid_choices=["yes", "no"],
+                case_sensitive=False,
+                field_name="Create account",
+            )
 
-            if user_input.lower() == "yes":
-                generated_uuid = str(uuid4())
-
-                success(f" => Generated ID: {generated_uuid}")
-                nickname = question(" => Enter a nickname for this account: ")
-                fp_profile = question(" => Enter the path to the Firefox profile: ")
-                topic = question(" => Enter the account topic: ")
-
-                add_account(
-                    "twitter",
-                    {
-                        "id": generated_uuid,
-                        "nickname": nickname,
-                        "firefox_profile": fp_profile,
-                        "topic": topic,
-                        "posts": [],
-                    },
-                )
+            if create_choice.lower() == "yes":
+                try:
+                    account_data = create_twitter_account()
+                    add_account("twitter", account_data)
+                    success("Account configured successfully!")
+                except ValueError as e:
+                    error(f"Failed to create account: {e}")
+                    return
         else:
+            # Display existing accounts
             table = PrettyTable()
             table.field_names = ["ID", "UUID", "Nickname", "Account Topic"]
-
             for account in cached_accounts:
                 table.add_row(
                     [
@@ -277,148 +399,81 @@ def main():
                         colored(account["topic"], "green"),
                     ]
                 )
-
             print(table)
 
-            user_input = question("Select an account to start: ")
-
-            selected_account = None
-
-            for account in cached_accounts:
-                if str(cached_accounts.index(account) + 1) == user_input:
-                    selected_account = account
-
-            if selected_account is None:
-                error("Invalid account selected. Please try again.", "red")
-                main()
-            else:
-                twitter = Twitter(
-                    selected_account["id"],
-                    selected_account["nickname"],
-                    selected_account["firefox_profile"],
-                    selected_account["topic"],
+            # Select account
+            try:
+                account_choice = validate_integer(
+                    question("Select an account to start: "),
+                    min_value=1,
+                    max_value=len(cached_accounts),
+                    field_name="Account selection",
                 )
-
-                while True:
-
-                    info("\n============ OPTIONS ============", False)
-
-                    for idx, twitter_option in enumerate(TWITTER_OPTIONS):
-                        print(colored(f" {idx + 1}. {twitter_option}", "cyan"))
-
-                    info("=================================\n", False)
-
-                    # Get user input
-                    user_input = int(question("Select an option: "))
-
-                    if user_input == 1:
-                        twitter.post()
-                    elif user_input == 2:
-                        posts = twitter.get_posts()
-
-                        posts_table = PrettyTable()
-
-                        posts_table.field_names = ["ID", "Date", "Content"]
-
-                        for post in posts:
-                            posts_table.add_row(
-                                [
-                                    posts.index(post) + 1,
-                                    colored(post["date"], "blue"),
-                                    colored(post["content"][:60] + "...", "green"),
-                                ]
-                            )
-
-                        print(posts_table)
-                    elif user_input == 3:
-                        info("How often do you want to post?")
-
-                        info("\n============ OPTIONS ============", False)
-                        for idx, cron_option in enumerate(TWITTER_CRON_OPTIONS):
-                            print(colored(f" {idx + 1}. {cron_option}", "cyan"))
-
-                        info("=================================\n", False)
-
-                        user_input = int(question("Select an Option: "))
-
-                        cron_script_path = os.path.join(ROOT_DIR, "src", "cron.py")
-                        command = f"python {cron_script_path} twitter {selected_account['id']}"
-
-                        def job():
-                            """Executes a shell command using subprocess.run.
-
-                            This function runs a specified shell command using the subprocess module.
-                            The command to be executed should be defined in the 'command' variable.
-
-                            Args:
-                                None
-
-                            Returns:
-                                None"""
-                            subprocess.run(command)
-
-                        if user_input == 1:
-                            # Post Once a day
-                            schedule.every(1).day.do(job)
-                            success("Set up CRON Job.")
-                        elif user_input == 2:
-                            # Post twice a day
-                            schedule.every().day.at("10:00").do(job)
-                            schedule.every().day.at("16:00").do(job)
-                            success("Set up CRON Job.")
-                        elif user_input == 3:
-                            # Post thrice a day
-                            schedule.every().day.at("08:00").do(job)
-                            schedule.every().day.at("12:00").do(job)
-                            schedule.every().day.at("18:00").do(job)
-                            success("Set up CRON Job.")
-                        else:
-                            break
-                    elif user_input == 4:
-                        if get_verbose():
-                            info(" => Climbing Options Ladder...", False)
-                        break
+                selected_account = cached_accounts[account_choice - 1]
+                run_twitter_operations(selected_account)
+            except (ValueError, IndexError) as e:
+                error(f"Invalid account selected: {e}")
+                return
     elif user_input == 3:
+        # Affiliate Marketing
         info("Starting Affiliate Marketing...")
-
         cached_products = get_products()
 
         if len(cached_products) == 0:
             warning("No products found in cache. Create one now?")
-            user_input = question("Yes/No: ")
+            create_choice = validate_choice(
+                question("Yes/No: "),
+                valid_choices=["yes", "no"],
+                case_sensitive=False,
+                field_name="Create product",
+            )
 
-            if user_input.lower() == "yes":
-                affiliate_link = question(" => Enter the affiliate link: ")
-                twitter_uuid = question(" => Enter the Twitter Account UUID: ")
+            if create_choice.lower() == "yes":
+                try:
+                    affiliate_link = validate_non_empty_string(
+                        question(" => Enter the affiliate link: "), "Affiliate link"
+                    )
+                    twitter_uuid = validate_non_empty_string(
+                        question(" => Enter the Twitter Account UUID: "), "Twitter UUID"
+                    )
 
-                # Find the account
-                account = None
-                for acc in get_accounts("twitter"):
-                    if acc["id"] == twitter_uuid:
-                        account = acc
+                    # Find the account
+                    twitter_accounts = get_accounts("twitter")
+                    account = next(
+                        (acc for acc in twitter_accounts if acc["id"] == twitter_uuid), None
+                    )
 
-                add_product(
-                    {
-                        "id": str(uuid4()),
-                        "affiliate_link": affiliate_link,
-                        "twitter_uuid": twitter_uuid,
-                    }
-                )
+                    if not account:
+                        error(f"Twitter account with UUID {twitter_uuid} not found")
+                        return
 
-                afm = AffiliateMarketing(
-                    affiliate_link,
-                    account["firefox_profile"],
-                    account["id"],
-                    account["nickname"],
-                    account["topic"],
-                )
+                    # Add product to cache
+                    add_product(
+                        {
+                            "id": str(uuid4()),
+                            "affiliate_link": affiliate_link,
+                            "twitter_uuid": twitter_uuid,
+                        }
+                    )
 
-                afm.generate_pitch()
-                afm.share_pitch("twitter")
+                    # Generate and share pitch
+                    afm = AffiliateMarketing(
+                        affiliate_link,
+                        account["firefox_profile"],
+                        account["id"],
+                        account["nickname"],
+                        account["topic"],
+                    )
+                    afm.generate_pitch()
+                    afm.share_pitch("twitter")
+
+                except ValueError as e:
+                    error(f"Failed to create product: {e}")
+                    return
         else:
+            # Display existing products
             table = PrettyTable()
             table.field_names = ["ID", "Affiliate Link", "Twitter Account UUID"]
-
             for product in cached_products:
                 table.add_row(
                     [
@@ -427,27 +482,34 @@ def main():
                         colored(product["twitter_uuid"], "blue"),
                     ]
                 )
-
             print(table)
 
-            user_input = question("Select a product to start: ")
+            # Select product
+            try:
+                product_choice = validate_integer(
+                    question("Select a product to start: "),
+                    min_value=1,
+                    max_value=len(cached_products),
+                    field_name="Product selection",
+                )
+                selected_product = cached_products[product_choice - 1]
 
-            selected_product = None
+                # Find associated Twitter account
+                twitter_accounts = get_accounts("twitter")
+                account = next(
+                    (
+                        acc
+                        for acc in twitter_accounts
+                        if acc["id"] == selected_product["twitter_uuid"]
+                    ),
+                    None,
+                )
 
-            for product in cached_products:
-                if str(cached_products.index(product) + 1) == user_input:
-                    selected_product = product
+                if not account:
+                    error(f"Twitter account {selected_product['twitter_uuid']} not found")
+                    return
 
-            if selected_product is None:
-                error("Invalid product selected. Please try again.", "red")
-                main()
-            else:
-                # Find the account
-                account = None
-                for acc in get_accounts("twitter"):
-                    if acc["id"] == selected_product["twitter_uuid"]:
-                        account = acc
-
+                # Generate and share pitch
                 afm = AffiliateMarketing(
                     selected_product["affiliate_link"],
                     account["firefox_profile"],
@@ -455,9 +517,12 @@ def main():
                     account["nickname"],
                     account["topic"],
                 )
-
                 afm.generate_pitch()
                 afm.share_pitch("twitter")
+
+            except (ValueError, IndexError) as e:
+                error(f"Invalid product selected: {e}")
+                return
 
     elif user_input == 4:
         info("Starting Outreach...")
