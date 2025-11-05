@@ -1,12 +1,10 @@
 import re
 import sys
-import time
 from datetime import datetime
 from typing import List
 
 from mistralai import Mistral
 from selenium import webdriver
-from selenium.common import exceptions
 from selenium.webdriver.common import keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options

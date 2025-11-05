@@ -10,9 +10,7 @@ This module sets up a comprehensive logging framework with:
 
 import logging
 import logging.handlers
-import os
 from pathlib import Path
-from typing import Optional
 
 # Create logs directory if it doesn't exist
 LOGS_DIR = Path(__file__).parent.parent / "logs"
