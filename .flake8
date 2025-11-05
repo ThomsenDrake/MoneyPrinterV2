@@ -1,0 +1,71 @@
+[flake8]
+# Configuration for flake8 linting
+
+# Maximum line length
+max-line-length = 100
+
+# Ignore specific error codes
+ignore =
+    # E203: whitespace before ':' (conflicts with Black)
+    E203,
+    # W503: line break before binary operator (conflicts with Black)
+    W503,
+    # E501: line too long (handled by Black)
+    E501,
+    # F403: 'from module import *' used (existing codebase pattern)
+    F403,
+    # F405: name may be undefined from star imports (consequence of F403)
+    F405,
+    # E722: bare except (existing code, to be fixed in Phase 3)
+    E722,
+    # C901: function too complex (existing code, to be fixed in Phase 3)
+    C901,
+    # E731: lambda assignment (existing code style)
+    E731,
+    # W291: trailing whitespace (handled by Black)
+    W291,
+    # W293: blank line with whitespace (handled by Black)
+    W293,
+    # F541: f-string without placeholders (informational messages)
+    F541,
+
+# Exclude directories
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    env,
+    .eggs,
+    *.egg,
+    build,
+    dist,
+    .tox,
+    .mypy_cache,
+    .pytest_cache,
+    htmlcov,
+    *.pyc
+
+# Show source code for errors
+show-source = True
+
+# Count errors
+count = True
+
+# Complexity settings
+max-complexity = 15
+
+# Per-file ignores
+per-file-ignores =
+    # Allow unused imports in __init__.py files
+    __init__.py:F401,F403
+    # Allow star imports in some files
+    src/utils.py:F403,F405
+    src/status.py:F403,F405
+    # Allow unused imports and variables in test files (test fixtures, mocks)
+    tests/*.py:F401,F841
+    # Allow unused variables in src files (validated_config used for side effects)
+    src/config.py:F841
+    src/llm_service.py:F401
+    # Allow f-strings without placeholders (informational messages)
+    src/*.py:F541

@@ -1,15 +1,18 @@
 import os
-import sys
 import site
+import sys
 
-from config import ROOT_DIR
 from TTS.utils.manage import ModelManager
 from TTS.utils.synthesizer import Synthesizer
+
+from config import ROOT_DIR
+
 
 class TTS:
     """
     Class for Text-to-Speech using Coqui TTS.
     """
+
     def __init__(self) -> None:
         """
         Initializes the TTS class.
@@ -18,7 +21,9 @@ class TTS:
             None
         """
         # Detect virtual environment site packages
-        if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+        if hasattr(sys, "real_prefix") or (
+            hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+        ):
             # We're in a virtual environment
             site_packages = site.getsitepackages()[0]
         else:
@@ -41,19 +46,21 @@ class TTS:
         self._model_manager = ModelManager(models_json_path)
 
         # Download tts_models/en/ljspeech/fast_pitch
-        self._model_path, self._config_path, self._model_item = \
-            self._model_manager.download_model("tts_models/en/ljspeech/tacotron2-DDC_ph")
+        self._model_path, self._config_path, self._model_item = self._model_manager.download_model(
+            "tts_models/en/ljspeech/tacotron2-DDC_ph"
+        )
 
         # Download vocoder_models/en/ljspeech/hifigan_v2 as our vocoder
-        voc_path, voc_config_path, _ = self._model_manager. \
-            download_model("vocoder_models/en/ljspeech/univnet")
-        
+        voc_path, voc_config_path, _ = self._model_manager.download_model(
+            "vocoder_models/en/ljspeech/univnet"
+        )
+
         # Initialize the Synthesizer
         self._synthesizer = Synthesizer(
             tts_checkpoint=self._model_path,
             tts_config_path=self._config_path,
             vocoder_checkpoint=voc_path,
-            vocoder_config=voc_config_path
+            vocoder_config=voc_config_path,
         )
 
     @property
@@ -66,7 +73,9 @@ class TTS:
         """
         return self._synthesizer
 
-    def synthesize(self, text: str, output_file: str = os.path.join(ROOT_DIR, ".mp", "audio.wav")) -> str:
+    def synthesize(
+        self, text: str, output_file: str = os.path.join(ROOT_DIR, ".mp", "audio.wav")
+    ) -> str:
         """
         Synthesizes the given text into speech.
 
@@ -84,4 +93,3 @@ class TTS:
         self.synthesizer.save_wav(outputs, output_file)
 
         return output_file
-

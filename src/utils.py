@@ -1,13 +1,15 @@
-import os
-import random
-import zipfile
-import requests
-import platform
-import subprocess
 import logging
+import os
+import platform
+import random
+import subprocess
+import zipfile
 
-from status import *
+import requests
+
 from config import *
+from status import *
+
 
 def close_running_selenium_instances() -> None:
     """
@@ -21,7 +23,9 @@ def close_running_selenium_instances() -> None:
 
         # Kill all running Firefox instances
         if platform.system() == "Windows":
-            subprocess.run(["taskkill", "/f", "/im", "firefox.exe"], check=False, capture_output=True)
+            subprocess.run(
+                ["taskkill", "/f", "/im", "firefox.exe"], check=False, capture_output=True
+            )
         else:
             subprocess.run(["pkill", "firefox"], check=False, capture_output=True)
 
@@ -34,6 +38,7 @@ def close_running_selenium_instances() -> None:
         logging.error(f"Unexpected error while closing Selenium instances: {str(e)}", exc_info=True)
         error(f"Error occurred while closing running Selenium instances: {str(e)}")
 
+
 def build_url(youtube_video_id: str) -> str:
     """
     Builds the URL to the YouTube video.
@@ -45,6 +50,7 @@ def build_url(youtube_video_id: str) -> str:
         url (str): The URL to the YouTube video.
     """
     return f"https://www.youtube.com/watch?v={youtube_video_id}"
+
 
 def rem_temp_files() -> None:
     """
@@ -61,6 +67,7 @@ def rem_temp_files() -> None:
     for file in files:
         if not file.endswith(".json"):
             os.remove(os.path.join(mp_dir, file))
+
 
 def fetch_songs() -> None:
     """
@@ -82,7 +89,10 @@ def fetch_songs() -> None:
             return
 
         # Download songs
-        response = requests.get(get_zip_url() or "https://filebin.net/bb9ewdtckolsf3sg/drive-download-20240209T180019Z-001.zip")
+        response = requests.get(
+            get_zip_url()
+            or "https://filebin.net/bb9ewdtckolsf3sg/drive-download-20240209T180019Z-001.zip"
+        )
 
         # Save the zip file
         with open(os.path.join(files_dir, "songs.zip"), "wb") as file:
@@ -106,6 +116,7 @@ def fetch_songs() -> None:
     except Exception as e:
         logging.error(f"Unexpected error while fetching songs: {str(e)}", exc_info=True)
         error(f"Error occurred while fetching songs: {str(e)}")
+
 
 def choose_random_song() -> str:
     """
