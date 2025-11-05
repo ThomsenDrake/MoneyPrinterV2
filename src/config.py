@@ -13,10 +13,13 @@ class ConfigManager:
     """
     Singleton configuration manager that caches config.json in memory.
     This eliminates the performance bottleneck of reading the file repeatedly.
+
+    Optionally supports Pydantic validation for type safety and early error detection.
     """
     _instance: Optional['ConfigManager'] = None
     _config: Optional[Dict[str, Any]] = None
     _config_path: str = None
+    _validated: bool = False
 
     def __new__(cls):
         if cls._instance is None:
@@ -26,11 +29,21 @@ class ConfigManager:
         return cls._instance
 
     @classmethod
-    def _load_config(cls) -> None:
-        """Load configuration from config.json file."""
+    def _load_config(cls, validate: bool = False) -> None:
+        """
+        Load configuration from config.json file.
+
+        Args:
+            validate: If True, validate config using Pydantic schema
+        """
         try:
             with open(cls._config_path, "r") as file:
                 cls._config = json.load(file)
+
+            # Optional validation using Pydantic
+            if validate:
+                cls.validate()
+
         except FileNotFoundError:
             logging.error(f"Config file not found: {cls._config_path}")
             cls._config = {}
@@ -39,9 +52,57 @@ class ConfigManager:
             cls._config = {}
 
     @classmethod
-    def reload(cls) -> None:
-        """Reload configuration from disk."""
-        cls._load_config()
+    def reload(cls, validate: bool = False) -> None:
+        """
+        Reload configuration from disk.
+
+        Args:
+            validate: If True, validate config using Pydantic schema
+        """
+        cls._load_config(validate=validate)
+
+    @classmethod
+    def validate(cls) -> bool:
+        """
+        Validate configuration using Pydantic schema.
+
+        Returns:
+            True if validation succeeds
+
+        Raises:
+            ValidationError: If configuration is invalid
+
+        Example:
+            >>> ConfigManager.validate()
+            True
+        """
+        try:
+            from config_schema import validate_config
+            from pydantic import ValidationError
+
+            # Validate the configuration
+            validated_config = validate_config(cls._config)
+            cls._validated = True
+            logging.info("Configuration validated successfully")
+            return True
+
+        except ValidationError as e:
+            logging.error(f"Configuration validation failed: {str(e)}")
+            cls._validated = False
+            raise
+        except ImportError:
+            logging.warning("Pydantic not available, skipping validation")
+            return False
+
+    @classmethod
+    def is_validated(cls) -> bool:
+        """
+        Check if configuration has been validated.
+
+        Returns:
+            True if configuration has been validated successfully
+        """
+        return cls._validated
 
     @classmethod
     def get(cls, key: str, default: Any = None) -> Any:
