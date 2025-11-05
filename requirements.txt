@@ -28,3 +28,4 @@ requests==2.31.0
 # Utilities
 srt_equalizer==0.1.8
 platformdirs==4.1.0
+tenacity==8.2.3  # Retry logic for network operations

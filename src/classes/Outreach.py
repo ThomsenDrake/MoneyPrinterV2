@@ -9,6 +9,7 @@ import requests
 import subprocess
 import logging
 import platform
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from cache import *
 from status import *
@@ -18,6 +19,31 @@ class Outreach:
     """
     Class that houses the methods to reach out to businesses.
     """
+
+    @staticmethod
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((requests.RequestException, requests.Timeout)),
+        reraise=True
+    )
+    def _make_http_request_with_retry(method: str, url: str, **kwargs):
+        """
+        Make HTTP request with automatic retry on transient failures.
+
+        Args:
+            method: HTTP method (GET, POST, etc.)
+            url: URL to request
+            **kwargs: Additional arguments for requests
+
+        Returns:
+            Response object
+        """
+        logging.info(f"Making {method} request to {url}")
+        response = requests.request(method, url, timeout=30, **kwargs)
+        response.raise_for_status()
+        return response
+
     def __init__(self) -> None:
         """
         Constructor for the Outreach class.
@@ -71,9 +97,13 @@ class Outreach:
             info("=> Scraper already unzipped. Skipping unzip.")
             return
 
-        r = requests.get(zip_link)
-        z = zipfile.ZipFile(io.BytesIO(r.content))
-        z.extractall()
+        try:
+            r = self._make_http_request_with_retry("GET", zip_link)
+            z = zipfile.ZipFile(io.BytesIO(r.content))
+            z.extractall()
+        except Exception as e:
+            logging.error(f"Failed to download and extract scraper: {str(e)}", exc_info=True)
+            raise
 
     def build_scraper(self) -> None:
         """
@@ -186,8 +216,8 @@ class Outreach:
         """Extracts an email address from a website and updates a CSV file with it.
 
     This method sends a GET request to the specified website, searches for the
-    first email address in the HTML content, and appends it to the specified 
-    row in a CSV file. If no email address is found, no changes are made to 
+    first email address in the HTML content, and appends it to the specified
+    row in a CSV file. If no email address is found, no changes are made to
     the CSV file.
 
     Args:
@@ -197,7 +227,12 @@ class Outreach:
         # Extract and set an email for a website
         email = ""
 
-        r = requests.get(website)
+        try:
+            r = self._make_http_request_with_retry("GET", website)
+        except Exception as e:
+            logging.warning(f"Failed to fetch website {website}: {str(e)}")
+            return
+
         if r.status_code == 200:
             # Define a regular expression pattern to match email addresses
             email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b"
@@ -267,7 +302,13 @@ class Outreach:
                 website = [w for w in website if w.startswith("http")]
                 website = website[0] if len(website) > 0 else ""
                 if website != "":
-                    test_r = requests.get(website)
+                    try:
+                        test_r = self._make_http_request_with_retry("GET", website)
+                    except Exception as e:
+                        logging.warning(f"Failed to validate website {website}: {str(e)}")
+                        warning(f" => Website {website} is not accessible. Skipping...")
+                        continue
+
                     if test_r.status_code == 200:
                         self.set_email_for_website(items.index(item), website, output_path)
                         
