@@ -4,7 +4,6 @@ import os
 import sys
 from typing import Any, Dict, Optional
 
-import srt_equalizer
 from termcolor import colored
 
 ROOT_DIR = os.path.dirname(sys.path[0])
@@ -354,6 +353,8 @@ def equalize_subtitles(srt_path: str, max_chars: int = 10) -> None:
     Returns:
         None
     """
+    import srt_equalizer  # Lazy import to avoid dependency issues
+
     srt_equalizer.equalize_srt_file(srt_path, srt_path, max_chars)
 
 
