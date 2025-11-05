@@ -128,16 +128,19 @@ class TestBrowserFactory:
         assert result == mock_browser
 
     @patch("browser_factory.webdriver.Firefox")
+    @patch("browser_factory.webdriver.FirefoxProfile")
     @patch("browser_factory.Service")
     @patch("browser_factory.GeckoDriverManager")
     @patch("browser_factory.Options")
     def test_create_firefox_browser_exception(
-        self, mock_options_class, mock_gecko_manager, mock_service_class, mock_firefox
+        self, mock_options_class, mock_gecko_manager, mock_service_class, mock_profile_class, mock_firefox
     ):
         """Test handling exception during browser creation."""
         from browser_factory import BrowserFactory
 
-        # Setup mocks to raise exception
+        # Setup mocks - profile should succeed but Firefox creation should fail
+        mock_profile = MagicMock()
+        mock_profile_class.return_value = mock_profile
         mock_firefox.side_effect = Exception("Browser creation failed")
 
         # Verify exception is raised

@@ -92,7 +92,7 @@ class TestConfigSchema:
         """Test that empty Firefox profile is rejected."""
         from config_schema import ConfigSchema
 
-        with pytest.raises(ValidationError, match="Firefox profile path cannot be empty"):
+        with pytest.raises(ValidationError, match="String should have at least 1 character"):
             ConfigSchema(firefox_profile="")
 
     def test_whitespace_firefox_profile_rejected(self):
@@ -106,7 +106,7 @@ class TestConfigSchema:
         """Test that thread count less than 1 is rejected."""
         from config_schema import ConfigSchema
 
-        with pytest.raises(ValidationError, match="Thread count must be at least 1"):
+        with pytest.raises(ValidationError, match="Input should be greater than or equal to 1"):
             ConfigSchema(firefox_profile="/path", threads=0)
 
     def test_invalid_thread_count_too_high(self):
@@ -120,14 +120,14 @@ class TestConfigSchema:
         """Test that scraper timeout less than 30 is rejected."""
         from config_schema import ConfigSchema
 
-        with pytest.raises(ValidationError, match="at least 30 seconds"):
+        with pytest.raises(ValidationError, match="Input should be greater than or equal to 30"):
             ConfigSchema(firefox_profile="/path", scraper_timeout=10)
 
     def test_invalid_scraper_timeout_too_high(self):
         """Test that scraper timeout greater than 3600 is rejected."""
         from config_schema import ConfigSchema
 
-        with pytest.raises(ValidationError, match="should not exceed 1 hour"):
+        with pytest.raises(ValidationError, match="Input should be less than or equal to 3600"):
             ConfigSchema(firefox_profile="/path", scraper_timeout=5000)
 
     def test_twitter_language_validation(self):

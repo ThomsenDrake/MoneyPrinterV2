@@ -189,46 +189,46 @@ class TestCachePaths:
 
     def test_get_cache_path(self):
         """Test getting cache path."""
-        import config
+        import cache
         from cache import get_cache_path
 
-        with patch.object(config, "ROOT_DIR", "/test/root"):
+        with patch.object(cache, "ROOT_DIR", "/test/root"):
             result = get_cache_path()
             assert result == "/test/root/.mp"
 
     def test_get_youtube_cache_path(self):
         """Test getting YouTube cache path."""
-        import config
+        import cache
         from cache import get_youtube_cache_path
 
-        with patch.object(config, "ROOT_DIR", "/test/root"):
+        with patch.object(cache, "ROOT_DIR", "/test/root"):
             result = get_youtube_cache_path()
             assert result == "/test/root/.mp/youtube.json"
 
     def test_get_twitter_cache_path(self):
         """Test getting Twitter cache path."""
-        import config
+        import cache
         from cache import get_twitter_cache_path
 
-        with patch.object(config, "ROOT_DIR", "/test/root"):
+        with patch.object(cache, "ROOT_DIR", "/test/root"):
             result = get_twitter_cache_path()
             assert result == "/test/root/.mp/twitter.json"
 
     def test_get_afm_cache_path(self):
         """Test getting AFM cache path."""
-        import config
+        import cache
         from cache import get_afm_cache_path
 
-        with patch.object(config, "ROOT_DIR", "/test/root"):
+        with patch.object(cache, "ROOT_DIR", "/test/root"):
             result = get_afm_cache_path()
             assert result == "/test/root/.mp/afm.json"
 
     def test_get_results_cache_path(self):
         """Test getting results cache path."""
-        import config
+        import cache
         from cache import get_results_cache_path
 
-        with patch.object(config, "ROOT_DIR", "/test/root"):
+        with patch.object(cache, "ROOT_DIR", "/test/root"):
             result = get_results_cache_path()
             assert result == "/test/root/.mp/scraper_results.csv"
 
@@ -238,7 +238,7 @@ class TestAccountManagement:
 
     def test_get_accounts_youtube(self, temp_dir):
         """Test getting YouTube accounts."""
-        import config
+        import cache
         from cache import get_accounts
 
         # Setup
@@ -250,7 +250,7 @@ class TestAccountManagement:
         with open(youtube_cache, "w") as f:
             json.dump({"accounts": test_accounts}, f)
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(cache, "ROOT_DIR", str(temp_dir)):
             result = get_accounts("youtube")
 
         assert len(result) == 2
@@ -259,7 +259,7 @@ class TestAccountManagement:
 
     def test_get_accounts_twitter(self, temp_dir):
         """Test getting Twitter accounts."""
-        import config
+        import cache
         from cache import get_accounts
 
         # Setup
@@ -271,7 +271,7 @@ class TestAccountManagement:
         with open(twitter_cache, "w") as f:
             json.dump({"accounts": test_accounts}, f)
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(cache, "ROOT_DIR", str(temp_dir)):
             result = get_accounts("twitter")
 
         assert len(result) == 1
@@ -331,14 +331,14 @@ class TestAccountManagement:
 
     def test_remove_account(self, temp_dir):
         """Test removing account."""
-        import config
+        import cache
         from cache import add_account, get_accounts, remove_account
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(cache, "ROOT_DIR", str(temp_dir)):
             # Add accounts
             add_account("youtube", {"id": "1", "name": "Account 1"})
             add_account("youtube", {"id": "2", "name": "Account 2"})
@@ -396,14 +396,14 @@ class TestProductManagement:
 
     def test_add_multiple_products(self, temp_dir):
         """Test adding multiple products."""
-        import config
+        import cache
         from cache import add_product, get_products
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(cache, "ROOT_DIR", str(temp_dir)):
             add_product({"id": "1", "name": "Product 1"})
             add_product({"id": "2", "name": "Product 2"})
             add_product({"id": "3", "name": "Product 3"})

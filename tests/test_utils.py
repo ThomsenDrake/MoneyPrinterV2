@@ -91,7 +91,7 @@ class TestRemTempFiles:
 
     def test_rem_temp_files(self, temp_dir):
         """Test removing temporary files while keeping JSON files."""
-        import config
+        import utils
         from utils import rem_temp_files
 
         # Setup .mp directory with various files
@@ -105,7 +105,7 @@ class TestRemTempFiles:
         (mp_dir / "temp2.mp4").write_text("video")
         (mp_dir / "image.png").write_text("image")
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(utils, "ROOT_DIR", str(temp_dir)):
             rem_temp_files()
 
         # Check that JSON files remain
@@ -135,14 +135,14 @@ class TestFetchSongs:
 
     def test_fetch_songs_directory_exists(self, temp_dir):
         """Test that fetch_songs skips download if directory exists."""
-        import config
+        import utils
         from utils import fetch_songs
 
         # Create Songs directory
         songs_dir = temp_dir / "Songs"
         songs_dir.mkdir()
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(utils, "ROOT_DIR", str(temp_dir)):
             with patch("requests.get") as mock_get:
                 fetch_songs()
 
@@ -151,28 +151,26 @@ class TestFetchSongs:
 
     def test_fetch_songs_downloads_and_extracts(self, temp_dir):
         """Test that fetch_songs downloads and extracts songs."""
-        import config
+        import utils
         from utils import fetch_songs
 
-        # Mock response
+        # Mock response with actual zip content
+        import io
+        mock_zip_bytes = io.BytesIO()
+        with zipfile.ZipFile(mock_zip_bytes, 'w') as zf:
+            zf.writestr("test_song.mp3", "fake audio data")
+        mock_zip_bytes.seek(0)
+
         mock_response = MagicMock()
-        mock_response.content = b"fake zip content"
+        mock_response.content = mock_zip_bytes.read()
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(utils, "ROOT_DIR", str(temp_dir)):
             with patch("requests.get", return_value=mock_response):
-                with patch("zipfile.ZipFile") as mock_zipfile:
-                    mock_zip = MagicMock()
-                    mock_zipfile.return_value.__enter__.return_value = mock_zip
+                fetch_songs()
 
-                    # Create a real temp zip file for the test
-                    songs_dir = temp_dir / "Songs"
-
-                    with patch("builtins.open", mock_open()) as mock_file:
-                        with patch("os.remove"):
-                            fetch_songs()
-
-                    # Verify directory was created
-                    assert songs_dir.exists()
+                # Verify directory was created
+                songs_dir = temp_dir / "Songs"
+                assert songs_dir.exists()
 
     def test_fetch_songs_network_error(self, temp_dir):
         """Test handling network error when fetching songs."""
@@ -245,31 +243,31 @@ class TestChooseRandomSong:
 
     def test_choose_random_song_directory_not_found(self, temp_dir):
         """Test handling missing Songs directory."""
-        import config
+        import utils
         from utils import choose_random_song
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(utils, "ROOT_DIR", str(temp_dir)):
             result = choose_random_song()
 
         assert result is None
 
     def test_choose_random_song_empty_directory(self, temp_dir):
         """Test handling empty Songs directory."""
-        import config
+        import utils
         from utils import choose_random_song
 
         # Create empty Songs directory
         songs_dir = temp_dir / "Songs"
         songs_dir.mkdir()
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(utils, "ROOT_DIR", str(temp_dir)):
             result = choose_random_song()
 
         assert result is None
 
     def test_choose_random_song_single_file(self, temp_dir):
         """Test choosing song when only one file exists."""
-        import config
+        import utils
         from utils import choose_random_song
 
         # Setup Songs directory with single file
@@ -277,7 +275,7 @@ class TestChooseRandomSong:
         songs_dir.mkdir()
         (songs_dir / "only_song.mp3").write_text("music")
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(utils, "ROOT_DIR", str(temp_dir)):
             result = choose_random_song()
 
         assert result is not None

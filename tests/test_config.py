@@ -115,8 +115,11 @@ class TestConfigGetters:
         """Setup configuration before each test."""
         from config import ConfigManager
 
-        ConfigManager._instance = None
-        ConfigManager._config = mock_config_data
+        # Create a ConfigManager instance without loading from file
+        with patch.object(ConfigManager, "_load_config"):
+            instance = ConfigManager()
+            ConfigManager._instance = instance
+            ConfigManager._config = mock_config_data
 
     def test_get_verbose(self):
         """Test get_verbose returns correct value."""
