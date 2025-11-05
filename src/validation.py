@@ -100,7 +100,7 @@ def validate_integer(
 
         return int_value
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         raise ValueError(f"Invalid {field_name}: must be an integer")
 
 
@@ -201,10 +201,10 @@ def sanitize_filename(filename: str, max_length: int = 255) -> str:
 
     # Remove path separators and other dangerous characters
     # Keep alphanumeric, spaces, hyphens, underscores, and periods
-    sanitized = re.sub(r'[^a-zA-Z0-9\s\-_\.]', '', filename)
+    sanitized = re.sub(r"[^a-zA-Z0-9\s\-_\.]", "", filename)
 
     # Replace multiple spaces with single space
-    sanitized = re.sub(r'\s+', ' ', sanitized).strip()
+    sanitized = re.sub(r"\s+", " ", sanitized).strip()
 
     # Truncate if too long
     if len(sanitized) > max_length:

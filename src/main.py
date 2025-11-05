@@ -20,7 +20,7 @@ from constants import *
 from logger import setup_logger
 from status import *
 from utils import *
-from validation import validate_integer, validate_choice, validate_path, validate_non_empty_string
+from validation import validate_integer, validate_choice, validate_non_empty_string
 
 # Get logger for main module
 logger = setup_logger(__name__)
@@ -59,21 +59,13 @@ def create_youtube_account() -> Optional[Dict[str, Any]]:
 
     success(f" => Generated ID: {generated_uuid}")
     nickname = validate_non_empty_string(
-        question(" => Enter a nickname for this account: "),
-        "Nickname"
+        question(" => Enter a nickname for this account: "), "Nickname"
     )
     fp_profile = validate_non_empty_string(
-        question(" => Enter the path to the Firefox profile: "),
-        "Firefox profile path"
+        question(" => Enter the path to the Firefox profile: "), "Firefox profile path"
     )
-    niche = validate_non_empty_string(
-        question(" => Enter the account niche: "),
-        "Niche"
-    )
-    language = validate_non_empty_string(
-        question(" => Enter the account language: "),
-        "Language"
-    )
+    niche = validate_non_empty_string(question(" => Enter the account niche: "), "Niche")
+    language = validate_non_empty_string(question(" => Enter the account language: "), "Language")
 
     # Add image generation options
     info("\n============ IMAGE GENERATION ============", False)
@@ -86,7 +78,7 @@ def create_youtube_account() -> Optional[Dict[str, Any]]:
     image_gen_choice = validate_choice(
         question(" => Select image generation method (1/2): "),
         valid_choices=["1", "2"],
-        field_name="Image generation method"
+        field_name="Image generation method",
     )
 
     account_data = {
@@ -101,8 +93,7 @@ def create_youtube_account() -> Optional[Dict[str, Any]]:
 
     if image_gen_choice == "2":
         worker_url = validate_non_empty_string(
-            question(" => Enter your Cloudflare worker URL for image generation: "),
-            "Worker URL"
+            question(" => Enter your Cloudflare worker URL for image generation: "), "Worker URL"
         )
         account_data["worker_url"] = worker_url
 
@@ -120,17 +111,12 @@ def create_twitter_account() -> Optional[Dict[str, Any]]:
 
     success(f" => Generated ID: {generated_uuid}")
     nickname = validate_non_empty_string(
-        question(" => Enter a nickname for this account: "),
-        "Nickname"
+        question(" => Enter a nickname for this account: "), "Nickname"
     )
     fp_profile = validate_non_empty_string(
-        question(" => Enter the path to the Firefox profile: "),
-        "Firefox profile path"
+        question(" => Enter the path to the Firefox profile: "), "Firefox profile path"
     )
-    topic = validate_non_empty_string(
-        question(" => Enter the account topic: "),
-        "Topic"
-    )
+    topic = validate_non_empty_string(question(" => Enter the account topic: "), "Topic")
 
     return {
         "id": generated_uuid,
@@ -150,6 +136,7 @@ def setup_cron_job(command: str, schedule_option: int, platform: str) -> None:
         schedule_option (int): The schedule option selected by user
         platform (str): The platform (youtube or twitter)
     """
+
     def job():
         """Executes the scheduled command."""
         subprocess.run(command, shell=False)
@@ -204,7 +191,7 @@ def run_youtube_operations(selected_account: Dict[str, Any]) -> None:
                 question("Do you want to upload this video to YouTube? (Yes/No): "),
                 valid_choices=["yes", "no"],
                 case_sensitive=False,
-                field_name="Upload choice"
+                field_name="Upload choice",
             )
             if upload_to_yt.lower() == "yes":
                 youtube.upload_video()
@@ -216,11 +203,13 @@ def run_youtube_operations(selected_account: Dict[str, Any]) -> None:
                 videos_table = PrettyTable()
                 videos_table.field_names = ["ID", "Date", "Title"]
                 for video in videos:
-                    videos_table.add_row([
-                        videos.index(video) + 1,
-                        colored(video["date"], "blue"),
-                        colored(video["title"][:60] + "...", "green"),
-                    ])
+                    videos_table.add_row(
+                        [
+                            videos.index(video) + 1,
+                            colored(video["date"], "blue"),
+                            colored(video["title"][:60] + "...", "green"),
+                        ]
+                    )
                 print(videos_table)
             else:
                 warning(" No videos found.")
@@ -268,11 +257,13 @@ def run_twitter_operations(selected_account: Dict[str, Any]) -> None:
             posts_table = PrettyTable()
             posts_table.field_names = ["ID", "Date", "Content"]
             for post in posts:
-                posts_table.add_row([
-                    posts.index(post) + 1,
-                    colored(post["date"], "blue"),
-                    colored(post["content"][:60] + "...", "green"),
-                ])
+                posts_table.add_row(
+                    [
+                        posts.index(post) + 1,
+                        colored(post["date"], "blue"),
+                        colored(post["content"][:60] + "...", "green"),
+                    ]
+                )
             print(posts_table)
 
         elif user_input == 3:
@@ -333,7 +324,7 @@ def main():
                 question("Yes/No: "),
                 valid_choices=["yes", "no"],
                 case_sensitive=False,
-                field_name="Create account"
+                field_name="Create account",
             )
 
             if create_choice.lower() == "yes":
@@ -349,12 +340,14 @@ def main():
             table = PrettyTable()
             table.field_names = ["ID", "UUID", "Nickname", "Niche"]
             for account in cached_accounts:
-                table.add_row([
-                    cached_accounts.index(account) + 1,
-                    colored(account["id"], "cyan"),
-                    colored(account["nickname"], "blue"),
-                    colored(account["niche"], "green"),
-                ])
+                table.add_row(
+                    [
+                        cached_accounts.index(account) + 1,
+                        colored(account["id"], "cyan"),
+                        colored(account["nickname"], "blue"),
+                        colored(account["niche"], "green"),
+                    ]
+                )
             print(table)
 
             # Select account
@@ -363,7 +356,7 @@ def main():
                     question("Select an account to start: "),
                     min_value=1,
                     max_value=len(cached_accounts),
-                    field_name="Account selection"
+                    field_name="Account selection",
                 )
                 selected_account = cached_accounts[account_choice - 1]
                 run_youtube_operations(selected_account)
@@ -382,7 +375,7 @@ def main():
                 question("Yes/No: "),
                 valid_choices=["yes", "no"],
                 case_sensitive=False,
-                field_name="Create account"
+                field_name="Create account",
             )
 
             if create_choice.lower() == "yes":
@@ -398,12 +391,14 @@ def main():
             table = PrettyTable()
             table.field_names = ["ID", "UUID", "Nickname", "Account Topic"]
             for account in cached_accounts:
-                table.add_row([
-                    cached_accounts.index(account) + 1,
-                    colored(account["id"], "cyan"),
-                    colored(account["nickname"], "blue"),
-                    colored(account["topic"], "green"),
-                ])
+                table.add_row(
+                    [
+                        cached_accounts.index(account) + 1,
+                        colored(account["id"], "cyan"),
+                        colored(account["nickname"], "blue"),
+                        colored(account["topic"], "green"),
+                    ]
+                )
             print(table)
 
             # Select account
@@ -412,7 +407,7 @@ def main():
                     question("Select an account to start: "),
                     min_value=1,
                     max_value=len(cached_accounts),
-                    field_name="Account selection"
+                    field_name="Account selection",
                 )
                 selected_account = cached_accounts[account_choice - 1]
                 run_twitter_operations(selected_account)
@@ -430,34 +425,36 @@ def main():
                 question("Yes/No: "),
                 valid_choices=["yes", "no"],
                 case_sensitive=False,
-                field_name="Create product"
+                field_name="Create product",
             )
 
             if create_choice.lower() == "yes":
                 try:
                     affiliate_link = validate_non_empty_string(
-                        question(" => Enter the affiliate link: "),
-                        "Affiliate link"
+                        question(" => Enter the affiliate link: "), "Affiliate link"
                     )
                     twitter_uuid = validate_non_empty_string(
-                        question(" => Enter the Twitter Account UUID: "),
-                        "Twitter UUID"
+                        question(" => Enter the Twitter Account UUID: "), "Twitter UUID"
                     )
 
                     # Find the account
                     twitter_accounts = get_accounts("twitter")
-                    account = next((acc for acc in twitter_accounts if acc["id"] == twitter_uuid), None)
+                    account = next(
+                        (acc for acc in twitter_accounts if acc["id"] == twitter_uuid), None
+                    )
 
                     if not account:
                         error(f"Twitter account with UUID {twitter_uuid} not found")
                         return
 
                     # Add product to cache
-                    add_product({
-                        "id": str(uuid4()),
-                        "affiliate_link": affiliate_link,
-                        "twitter_uuid": twitter_uuid,
-                    })
+                    add_product(
+                        {
+                            "id": str(uuid4()),
+                            "affiliate_link": affiliate_link,
+                            "twitter_uuid": twitter_uuid,
+                        }
+                    )
 
                     # Generate and share pitch
                     afm = AffiliateMarketing(
@@ -478,11 +475,13 @@ def main():
             table = PrettyTable()
             table.field_names = ["ID", "Affiliate Link", "Twitter Account UUID"]
             for product in cached_products:
-                table.add_row([
-                    cached_products.index(product) + 1,
-                    colored(product["affiliate_link"], "cyan"),
-                    colored(product["twitter_uuid"], "blue"),
-                ])
+                table.add_row(
+                    [
+                        cached_products.index(product) + 1,
+                        colored(product["affiliate_link"], "cyan"),
+                        colored(product["twitter_uuid"], "blue"),
+                    ]
+                )
             print(table)
 
             # Select product
@@ -491,15 +490,19 @@ def main():
                     question("Select a product to start: "),
                     min_value=1,
                     max_value=len(cached_products),
-                    field_name="Product selection"
+                    field_name="Product selection",
                 )
                 selected_product = cached_products[product_choice - 1]
 
                 # Find associated Twitter account
                 twitter_accounts = get_accounts("twitter")
                 account = next(
-                    (acc for acc in twitter_accounts if acc["id"] == selected_product["twitter_uuid"]),
-                    None
+                    (
+                        acc
+                        for acc in twitter_accounts
+                        if acc["id"] == selected_product["twitter_uuid"]
+                    ),
+                    None,
                 )
 
                 if not account:

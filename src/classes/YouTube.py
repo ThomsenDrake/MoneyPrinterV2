@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Any
 from uuid import uuid4
 
 import assemblyai as aai
@@ -107,7 +107,9 @@ class YouTube:
         """
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception], exc_tb: Optional[Any]) -> None:
+    def __exit__(
+        self, exc_type: Optional[type], exc_val: Optional[Exception], exc_tb: Optional[Any]
+    ) -> None:
         """
         Context manager exit point - ensures browser cleanup.
 
@@ -117,7 +119,7 @@ class YouTube:
             exc_tb: Exception traceback if an exception occurred
         """
         try:
-            if hasattr(self, 'browser') and self.browser:
+            if hasattr(self, "browser") and self.browser:
                 self.browser.quit()
                 logging.info("Browser instance closed successfully")
         except Exception as e:
