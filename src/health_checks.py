@@ -6,7 +6,7 @@ helping users identify configuration issues early.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from config import (
     get_assembly_ai_api_key,
@@ -80,10 +80,10 @@ class HealthChecker:
             # Try to create a Mistral client (lightweight check)
             from mistralai import Mistral
 
-            client = Mistral(api_key=api_key)
-
-            # Simple validation - just check if client was created
+            # Simple validation - just check if client can be created
             # (Full validation would require an API call which costs money)
+            Mistral(api_key=api_key)
+
             return HealthCheckResult(
                 "Mistral AI",
                 True,
@@ -99,9 +99,7 @@ class HealthChecker:
                 "Run: pip install mistralai",
             )
         except Exception as e:
-            return HealthCheckResult(
-                "Mistral AI", False, "Configuration error", str(e)
-            )
+            return HealthCheckResult("Mistral AI", False, "Configuration error", str(e))
 
     @staticmethod
     def check_venice_ai() -> HealthCheckResult:
@@ -174,9 +172,7 @@ class HealthChecker:
                 "Run: pip install assemblyai",
             )
         except Exception as e:
-            return HealthCheckResult(
-                "AssemblyAI", False, "Configuration error", str(e)
-            )
+            return HealthCheckResult("AssemblyAI", False, "Configuration error", str(e))
 
     @staticmethod
     def check_http_connectivity() -> HealthCheckResult:
@@ -215,9 +211,7 @@ class HealthChecker:
             )
 
     @classmethod
-    def run_all_checks(
-        cls, verbose: bool = True
-    ) -> Tuple[List[HealthCheckResult], bool]:
+    def run_all_checks(cls, verbose: bool = True) -> Tuple[List[HealthCheckResult], bool]:
         """
         Run all health checks.
 
@@ -290,9 +284,7 @@ class HealthChecker:
 
         if not all_passed:
             logging.error("Startup health checks failed")
-            warning(
-                "\nWARNING: Some health checks failed. The application may not work correctly."
-            )
+            warning("\nWARNING: Some health checks failed. The application may not work correctly.")
             warning("Please check your configuration in config.json")
             return False
 

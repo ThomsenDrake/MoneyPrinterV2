@@ -12,7 +12,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from http_client import HTTPClient, get_http_client
+from http_client import HTTPClient, get_http_client  # noqa: E402
 
 
 class TestHTTPClient:
@@ -144,9 +144,7 @@ class TestHTTPClient:
 
         mock_response = Mock()
         mock_response.status_code = 404
-        mock_response.raise_for_status = Mock(
-            side_effect=requests.HTTPError("404 Not Found")
-        )
+        mock_response.raise_for_status = Mock(side_effect=requests.HTTPError("404 Not Found"))
         mock_request.return_value = mock_response
 
         with pytest.raises(requests.HTTPError):
@@ -156,6 +154,8 @@ class TestHTTPClient:
     def test_close_method(self, mock_close):
         """Test that close method closes the session."""
         HTTPClient.reset_instance()
+        mock_close.reset_mock()  # Reset mock after reset_instance() call
+
         client = HTTPClient()
         client.close()
 

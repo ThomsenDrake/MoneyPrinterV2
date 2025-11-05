@@ -7,7 +7,7 @@ YouTube and Twitter automation.
 
 import logging
 import subprocess
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 import schedule
 
@@ -57,9 +57,7 @@ class SchedulerService:
 
     TWITTER_SCHEDULES = {
         1: ScheduleConfig("twitter", "Post once per day", interval_days=1),
-        2: ScheduleConfig(
-            "twitter", "Post twice per day (10:00, 16:00)", times=["10:00", "16:00"]
-        ),
+        2: ScheduleConfig("twitter", "Post twice per day (10:00, 16:00)", times=["10:00", "16:00"]),
         3: ScheduleConfig(
             "twitter",
             "Post three times per day (08:00, 12:00, 18:00)",
@@ -83,9 +81,7 @@ class SchedulerService:
         return ["python", script_path, platform, account_id]
 
     @staticmethod
-    def setup_schedule(
-        command: List[str], schedule_config: ScheduleConfig
-    ) -> schedule.Job:
+    def setup_schedule(command: List[str], schedule_config: ScheduleConfig) -> schedule.Job:
         """
         Set up a schedule based on configuration.
 
@@ -245,9 +241,7 @@ def setup_youtube_schedule(
     Returns:
         schedule.Job: The scheduled job
     """
-    return SchedulerService.setup_youtube_schedule(
-        account_id, schedule_option, cron_script_path
-    )
+    return SchedulerService.setup_youtube_schedule(account_id, schedule_option, cron_script_path)
 
 
 def setup_twitter_schedule(
@@ -264,6 +258,4 @@ def setup_twitter_schedule(
     Returns:
         schedule.Job: The scheduled job
     """
-    return SchedulerService.setup_twitter_schedule(
-        account_id, schedule_option, cron_script_path
-    )
+    return SchedulerService.setup_twitter_schedule(account_id, schedule_option, cron_script_path)
