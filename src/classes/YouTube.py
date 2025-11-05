@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from datetime import datetime
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 from uuid import uuid4
 
 import assemblyai as aai

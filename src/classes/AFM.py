@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Any
+from typing import Any, Optional
 
 from mistralai import Mistral
 from selenium import webdriver
