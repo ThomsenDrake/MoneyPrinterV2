@@ -114,7 +114,7 @@ def mock_requests(monkeypatch):
     return {"get": mock_get, "post": mock_post, "response": mock_response}
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def reset_config_singleton():
     """Reset ConfigManager singleton between tests."""
     # This will be implemented when we test the ConfigManager
