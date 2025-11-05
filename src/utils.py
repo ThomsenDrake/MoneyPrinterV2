@@ -3,6 +3,8 @@ import random
 import zipfile
 import requests
 import platform
+import subprocess
+import logging
 
 from status import *
 from config import *
@@ -19,13 +21,17 @@ def close_running_selenium_instances() -> None:
 
         # Kill all running Firefox instances
         if platform.system() == "Windows":
-            os.system("taskkill /f /im firefox.exe")
+            subprocess.run(["taskkill", "/f", "/im", "firefox.exe"], check=False, capture_output=True)
         else:
-            os.system("pkill firefox")
+            subprocess.run(["pkill", "firefox"], check=False, capture_output=True)
 
         success(" => Closed running Selenium instances.")
 
+    except subprocess.SubprocessError as e:
+        logging.error(f"Subprocess error while closing Selenium instances: {str(e)}", exc_info=True)
+        error(f"Error occurred while closing running Selenium instances: {str(e)}")
     except Exception as e:
+        logging.error(f"Unexpected error while closing Selenium instances: {str(e)}", exc_info=True)
         error(f"Error occurred while closing running Selenium instances: {str(e)}")
 
 def build_url(youtube_video_id: str) -> str:
@@ -91,7 +97,14 @@ def fetch_songs() -> None:
 
         success(" => Downloaded Songs to ../Songs.")
 
+    except requests.RequestException as e:
+        logging.error(f"Network error while fetching songs: {str(e)}", exc_info=True)
+        error(f"Error occurred while fetching songs: {str(e)}")
+    except (OSError, zipfile.BadZipFile) as e:
+        logging.error(f"File system error while processing songs: {str(e)}", exc_info=True)
+        error(f"Error occurred while processing songs: {str(e)}")
     except Exception as e:
+        logging.error(f"Unexpected error while fetching songs: {str(e)}", exc_info=True)
         error(f"Error occurred while fetching songs: {str(e)}")
 
 def choose_random_song() -> str:
@@ -106,5 +119,15 @@ def choose_random_song() -> str:
         song = random.choice(songs)
         success(f" => Chose song: {song}")
         return os.path.join(ROOT_DIR, "Songs", song)
+    except FileNotFoundError as e:
+        logging.error(f"Songs directory not found: {str(e)}", exc_info=True)
+        error(f"Songs directory not found. Run fetch_songs() first: {str(e)}")
+        return None
+    except (IndexError, ValueError) as e:
+        logging.error(f"No songs available in directory: {str(e)}", exc_info=True)
+        error(f"No songs available to choose from: {str(e)}")
+        return None
     except Exception as e:
+        logging.error(f"Unexpected error while choosing song: {str(e)}", exc_info=True)
         error(f"Error occurred while choosing random song: {str(e)}")
+        return None

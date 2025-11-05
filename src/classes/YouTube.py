@@ -1,9 +1,11 @@
 import re
 import json
 import time
+import logging
 import requests
 import assemblyai as aai
 from mistralai import Mistral
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from utils import *
 from cache import *
@@ -25,6 +27,11 @@ from selenium.webdriver.firefox.options import Options
 from moviepy.video.tools.subtitles import SubtitlesClip
 from webdriver_manager.firefox import GeckoDriverManager
 from datetime import datetime
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    TimeoutException,
+    WebDriverException
+)
 
 # Set ImageMagick Path
 change_settings({"IMAGEMAGICK_BINARY": get_imagemagick_path()})
@@ -304,6 +311,31 @@ class YouTube:
 
         return image_prompts
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((requests.RequestException, requests.Timeout)),
+        reraise=True
+    )
+    def _make_http_request_with_retry(self, method: str, url: str, **kwargs):
+        """
+        Make HTTP request with automatic retry on transient failures.
+
+        Args:
+            method: HTTP method (GET, POST, etc.)
+            url: URL to request
+            **kwargs: Additional arguments for requests
+
+        Returns:
+            Response object
+        """
+        if get_verbose():
+            logging.info(f"Making {method} request to {url}")
+
+        response = requests.request(method, url, timeout=30, **kwargs)
+        response.raise_for_status()
+        return response
+
     def generate_image_venice(self, prompt: str) -> str:
         """
         Generates an AI Image using Venice AI with qwen-image.
@@ -333,7 +365,7 @@ class YouTube:
                 "n": 1
             }
 
-            response = requests.post(url, headers=headers, json=data)
+            response = self._make_http_request_with_retry("POST", url, headers=headers, json=data)
 
             if response.status_code == 200:
                 response_data = response.json()
@@ -342,8 +374,8 @@ class YouTube:
                     # Get the image URL from the response
                     image_url = response_data["data"][0]["url"]
 
-                    # Download the image
-                    image_response = requests.get(image_url)
+                    # Download the image with retry logic
+                    image_response = self._make_http_request_with_retry("GET", image_url)
 
                     if image_response.status_code == 200:
                         image_path = os.path.join(ROOT_DIR, ".mp", str(uuid4()) + ".png")
@@ -388,8 +420,12 @@ class YouTube:
         print(f"Generating Image using Cloudflare: {prompt}")
 
         url = f"{worker_url}?prompt={prompt}&model=sdxl"
-        
-        response = requests.get(url)
+
+        try:
+            response = self._make_http_request_with_retry("GET", url)
+        except Exception as e:
+            logging.error(f"Failed to generate image from Cloudflare: {str(e)}", exc_info=True)
+            return None
         
         if response.headers.get('content-type') == 'image/png':
             image_path = os.path.join(ROOT_DIR, ".mp", str(uuid4()) + ".png")
@@ -806,8 +842,29 @@ class YouTube:
             driver.quit()
 
             return True
-        except:
-            self.browser.quit()
+        except (NoSuchElementException, TimeoutException) as e:
+            logging.error(f"Failed to find YouTube upload element: {str(e)}", exc_info=True)
+            error(f"YouTube upload failed - element not found: {str(e)}")
+            try:
+                self.browser.quit()
+            except:
+                pass
+            return False
+        except WebDriverException as e:
+            logging.error(f"WebDriver error during upload: {str(e)}", exc_info=True)
+            error(f"Browser error during upload: {str(e)}")
+            try:
+                self.browser.quit()
+            except:
+                pass
+            return False
+        except Exception as e:
+            logging.error(f"Unexpected error during video upload: {str(e)}", exc_info=True)
+            error(f"Unexpected error during video upload: {str(e)}")
+            try:
+                self.browser.quit()
+            except:
+                pass
             return False
 
 

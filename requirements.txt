@@ -1,17 +1,31 @@
-wheel
-termcolor
-schedule
-TTS
-prettytable
-webdriver_manager
-selenium_firefox
-selenium
-mistralai
-requests
-moviepy
-Pillow==9.5.0
-yagmail
-assemblyai
-srt_equalizer
-undetected_chromedriver
-platformdirs
+# Core dependencies with pinned versions for reproducible builds
+# Updated: 2025-11-05
+
+wheel==0.42.0
+termcolor==2.4.0
+schedule==1.2.1
+TTS==0.22.0
+prettytable==3.9.0
+
+# Web automation
+webdriver_manager==4.0.1
+selenium_firefox==2.0.1
+selenium==4.16.0
+undetected_chromedriver==3.5.5
+
+# AI/ML APIs
+mistralai==1.0.1
+assemblyai==0.33.0
+
+# Media processing
+moviepy==1.0.3
+Pillow==10.4.0  # Updated from 9.5.0 - SECURITY FIX
+
+# Communication
+yagmail==0.15.293
+requests==2.31.0
+
+# Utilities
+srt_equalizer==0.1.8
+platformdirs==4.1.0
+tenacity==8.2.3  # Retry logic for network operations
