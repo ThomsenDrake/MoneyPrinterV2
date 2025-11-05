@@ -1,6 +1,7 @@
 import re
 import json
 import time
+import logging
 import requests
 import assemblyai as aai
 from mistralai import Mistral
@@ -25,6 +26,11 @@ from selenium.webdriver.firefox.options import Options
 from moviepy.video.tools.subtitles import SubtitlesClip
 from webdriver_manager.firefox import GeckoDriverManager
 from datetime import datetime
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    TimeoutException,
+    WebDriverException
+)
 
 # Set ImageMagick Path
 change_settings({"IMAGEMAGICK_BINARY": get_imagemagick_path()})
@@ -806,8 +812,29 @@ class YouTube:
             driver.quit()
 
             return True
-        except:
-            self.browser.quit()
+        except (NoSuchElementException, TimeoutException) as e:
+            logging.error(f"Failed to find YouTube upload element: {str(e)}", exc_info=True)
+            error(f"YouTube upload failed - element not found: {str(e)}")
+            try:
+                self.browser.quit()
+            except:
+                pass
+            return False
+        except WebDriverException as e:
+            logging.error(f"WebDriver error during upload: {str(e)}", exc_info=True)
+            error(f"Browser error during upload: {str(e)}")
+            try:
+                self.browser.quit()
+            except:
+                pass
+            return False
+        except Exception as e:
+            logging.error(f"Unexpected error during video upload: {str(e)}", exc_info=True)
+            error(f"Unexpected error during video upload: {str(e)}")
+            try:
+                self.browser.quit()
+            except:
+                pass
             return False
 
 

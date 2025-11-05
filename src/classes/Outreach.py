@@ -7,6 +7,8 @@ import zipfile
 import yagmail
 import requests
 import subprocess
+import logging
+import platform
 
 from cache import *
 from status import *
@@ -24,7 +26,11 @@ class Outreach:
             None
         """
         # Check if go is installed
-        self.go_installed = os.system("go version") == 0
+        try:
+            subprocess.run(["go", "version"], check=True, capture_output=True, timeout=5)
+            self.go_installed = True
+        except (subprocess.SubprocessError, FileNotFoundError):
+            self.go_installed = False
 
         # Set niche
         self.niche = get_google_maps_scraper_niche()
@@ -41,9 +47,13 @@ class Outreach:
         """
         # Check if go is installed
         try:
-            subprocess.call("go version", shell=True)
+            subprocess.run(["go", "version"], check=True, capture_output=True, timeout=5)
             return True
+        except (subprocess.SubprocessError, FileNotFoundError) as e:
+            logging.debug(f"Go not installed or not accessible: {str(e)}")
+            return False
         except Exception as e:
+            logging.error(f"Unexpected error checking Go installation: {str(e)}", exc_info=True)
             return False
 
     def unzip_file(self, zip_link: str) -> None:
@@ -73,15 +83,24 @@ class Outreach:
             None
         """
         # Check if the scraper is already built, if not, build it
-        if os.path.exists("google-maps-scraper.exe"):
+        scraper_executable = "google-maps-scraper.exe" if platform.system() == "Windows" else "google-maps-scraper"
+        if os.path.exists(scraper_executable):
             print(colored("=> Scraper already built. Skipping build.", "blue"))
             return
 
-        os.chdir("google-maps-scraper-0.9.7")
-        os.system("go mod download")
-        os.system("go build")
-        os.system("mv google-maps-scraper ../google-maps-scraper")
-        os.chdir("..")
+        original_dir = os.getcwd()
+        try:
+            os.chdir("google-maps-scraper-0.9.7")
+            subprocess.run(["go", "mod", "download"], check=True)
+            subprocess.run(["go", "build"], check=True)
+
+            # Move the built executable to parent directory
+            if platform.system() == "Windows":
+                subprocess.run(["move", "google-maps-scraper.exe", "..\\google-maps-scraper.exe"], check=True, shell=True)
+            else:
+                subprocess.run(["mv", "google-maps-scraper", "../google-maps-scraper"], check=True)
+        finally:
+            os.chdir(original_dir)
 
     def run_scraper_with_args_for_30_seconds(self, args: str, timeout = 300) -> None:
         """
@@ -96,21 +115,56 @@ class Outreach:
         """
         # Run the scraper with the specified arguments
         info(" => Running scraper...")
-        command = "google-maps-scraper " + args
-        try:
-            scraper_process = subprocess.call(command.split(" "), shell=True, timeout=float(timeout))
 
-            if scraper_process == 0:
-                subprocess.call("taskkill /f /im google-maps-scraper.exe", shell=True)
+        # Build command as list for secure subprocess execution
+        scraper_executable = "./google-maps-scraper.exe" if platform.system() == "Windows" else "./google-maps-scraper"
+        command_list = [scraper_executable] + args.split()
+
+        try:
+            scraper_process = subprocess.run(
+                command_list,
+                timeout=float(timeout),
+                capture_output=True,
+                text=True
+            )
+
+            if scraper_process.returncode == 0:
+                self._kill_scraper_process()
                 print(colored("=> Scraper finished successfully.", "green"))
             else:
-                subprocess.call("taskkill /f /im google-maps-scraper.exe", shell=True)
+                self._kill_scraper_process()
+                logging.error(f"Scraper finished with error code {scraper_process.returncode}: {scraper_process.stderr}")
                 print(colored("=> Scraper finished with an error.", "red"))
-            
+
+        except subprocess.TimeoutExpired as e:
+            self._kill_scraper_process()
+            logging.warning(f"Scraper timed out after {timeout} seconds: {str(e)}")
+            print(colored(f"Scraper timed out after {timeout} seconds", "yellow"))
+        except subprocess.SubprocessError as e:
+            self._kill_scraper_process()
+            logging.error(f"Subprocess error while running scraper: {str(e)}", exc_info=True)
+            print(colored(f"An error occurred while running the scraper: {str(e)}", "red"))
         except Exception as e:
-            subprocess.call("taskkill /f /im google-maps-scraper.exe", shell=True)
-            print(colored("An error occurred while running the scraper:", "red"))
-            print(str(e))
+            self._kill_scraper_process()
+            logging.error(f"Unexpected error while running scraper: {str(e)}", exc_info=True)
+            print(colored(f"An unexpected error occurred: {str(e)}", "red"))
+
+    def _kill_scraper_process(self) -> None:
+        """
+        Kill the scraper process safely.
+
+        Returns:
+            None
+        """
+        try:
+            if platform.system() == "Windows":
+                subprocess.run(["taskkill", "/f", "/im", "google-maps-scraper.exe"],
+                             check=False, capture_output=True)
+            else:
+                subprocess.run(["pkill", "-f", "google-maps-scraper"],
+                             check=False, capture_output=True)
+        except Exception as e:
+            logging.debug(f"Error killing scraper process: {str(e)}")
 
     def get_items_from_file(self, file_name: str) -> list:
         """
@@ -238,6 +292,15 @@ class Outreach:
                         success(f" => Sent email to {receiver_email}")
                     else:
                         warning(f" => Website {website} is invalid. Skipping...")
+            except requests.RequestException as err:
+                logging.error(f"Network error processing item {item}: {str(err)}", exc_info=True)
+                error(f" => Network error: {err}...")
+                continue
+            except (IndexError, ValueError) as err:
+                logging.error(f"Data parsing error for item {item}: {str(err)}", exc_info=True)
+                error(f" => Data error: {err}...")
+                continue
             except Exception as err:
-                error(f" => Error: {err}...")
+                logging.error(f"Unexpected error processing item {item}: {str(err)}", exc_info=True)
+                error(f" => Unexpected error: {err}...")
                 continue

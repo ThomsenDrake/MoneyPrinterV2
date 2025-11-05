@@ -1,0 +1,37 @@
+version: 2
+updates:
+  # Enable version updates for pip
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Raise pull requests for version updates
+    open-pull-requests-limit: 10
+    # Labels to set on pull requests
+    labels:
+      - "dependencies"
+      - "security"
+    # Allow both direct and indirect updates
+    versioning-strategy: increase
+    # Assignees for pull requests (optional - customize to your needs)
+    # assignees:
+    #   - "your-github-username"
+    # Reviewers for pull requests (optional - customize to your needs)
+    # reviewers:
+    #   - "your-github-username"
+    commit-message:
+      # Prefix all commit messages with "deps"
+      prefix: "deps"
+      # Include a list of updated dependencies in the commit message
+      include: "scope"
+
+  # Enable security updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
