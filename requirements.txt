@@ -8,7 +8,7 @@ TTS==0.22.0
 prettytable==3.9.0
 
 # Web automation
-webdriver_manager==4.0.1
+webdriver_manager==4.0.2
 selenium_firefox==2.0.1
 selenium==4.16.0
 undetected_chromedriver==3.5.5
