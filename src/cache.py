@@ -1,8 +1,9 @@
-import os
 import json
 import logging
+import os
 import platform
 from typing import List
+
 from config import ROOT_DIR
 
 # Import appropriate file locking module based on platform
@@ -16,6 +17,7 @@ class FileLock:
     """
     Cross-platform file locking context manager to prevent race conditions.
     """
+
     def __init__(self, file_handle):
         self.file_handle = file_handle
 
@@ -57,7 +59,7 @@ def _atomic_read_json(file_path: str, default: dict) -> dict:
         return default
 
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             with FileLock(file):
                 content = file.read()
                 if not content:
@@ -83,7 +85,7 @@ def _atomic_write_json(file_path: str, data: dict) -> None:
         # Ensure directory exists
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-        with open(file_path, 'w') as file:
+        with open(file_path, "w") as file:
             with FileLock(file):
                 json.dump(data, file, indent=4)
     except IOError as e:
@@ -108,7 +110,7 @@ def _atomic_update_json(file_path: str, update_fn, default: dict) -> None:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         # Open file in read-write mode, create if doesn't exist
-        with open(file_path, 'a+') as file:
+        with open(file_path, "a+") as file:
             with FileLock(file):
                 # Move to beginning to read
                 file.seek(0)
@@ -142,7 +144,7 @@ def get_cache_path() -> str:
     Returns:
         path (str): The path to the cache folder
     """
-    return os.path.join(ROOT_DIR, '.mp')
+    return os.path.join(ROOT_DIR, ".mp")
 
 
 def get_afm_cache_path() -> str:
@@ -152,7 +154,7 @@ def get_afm_cache_path() -> str:
     Returns:
         path (str): The path to the AFM cache folder
     """
-    return os.path.join(get_cache_path(), 'afm.json')
+    return os.path.join(get_cache_path(), "afm.json")
 
 
 def get_twitter_cache_path() -> str:
@@ -162,7 +164,7 @@ def get_twitter_cache_path() -> str:
     Returns:
         path (str): The path to the Twitter cache folder
     """
-    return os.path.join(get_cache_path(), 'twitter.json')
+    return os.path.join(get_cache_path(), "twitter.json")
 
 
 def get_youtube_cache_path() -> str:
@@ -172,7 +174,7 @@ def get_youtube_cache_path() -> str:
     Returns:
         path (str): The path to the YouTube cache folder
     """
-    return os.path.join(get_cache_path(), 'youtube.json')
+    return os.path.join(get_cache_path(), "youtube.json")
 
 
 def get_accounts(provider: str) -> List[dict]:
@@ -198,7 +200,7 @@ def get_accounts(provider: str) -> List[dict]:
     default_data = {"accounts": []}
     data = _atomic_read_json(cache_path, default_data)
 
-    return data.get('accounts', [])
+    return data.get("accounts", [])
 
 
 def add_account(provider: str, account: dict) -> None:
@@ -223,7 +225,7 @@ def add_account(provider: str, account: dict) -> None:
         return
 
     def update_fn(data):
-        accounts = data.get('accounts', [])
+        accounts = data.get("accounts", [])
         accounts.append(account)
         return {"accounts": accounts}
 
@@ -252,8 +254,8 @@ def remove_account(provider: str, account_id: str) -> None:
         return
 
     def update_fn(data):
-        accounts = data.get('accounts', [])
-        accounts = [account for account in accounts if account.get('id') != account_id]
+        accounts = data.get("accounts", [])
+        accounts = [account for account in accounts if account.get("id") != account_id]
         return {"accounts": accounts}
 
     _atomic_update_json(cache_path, update_fn, {"accounts": []})
@@ -281,8 +283,9 @@ def add_product(product: dict) -> None:
     Returns:
         None
     """
+
     def update_fn(data):
-        products = data.get('products', [])
+        products = data.get("products", [])
         products.append(product)
         return {"products": products}
 
@@ -296,4 +299,4 @@ def get_results_cache_path() -> str:
     Returns:
         path (str): The path to the results cache folder
     """
-    return os.path.join(get_cache_path(), 'scraper_results.csv')
+    return os.path.join(get_cache_path(), "scraper_results.csv")

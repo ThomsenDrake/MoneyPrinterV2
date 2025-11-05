@@ -1,12 +1,14 @@
 """
 Unit tests for utility functions (src/utils.py).
 """
+
 import os
-import pytest
 import platform
 import zipfile
-from unittest.mock import patch, MagicMock, mock_open, call
 from pathlib import Path
+from unittest.mock import MagicMock, call, mock_open, patch
+
+import pytest
 
 
 class TestCloseSeleniumInstances:
@@ -17,15 +19,13 @@ class TestCloseSeleniumInstances:
         """Test closing Selenium instances on Windows."""
         from utils import close_running_selenium_instances
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0)
 
             close_running_selenium_instances()
 
             mock_run.assert_called_once_with(
-                ["taskkill", "/f", "/im", "firefox.exe"],
-                check=False,
-                capture_output=True
+                ["taskkill", "/f", "/im", "firefox.exe"], check=False, capture_output=True
             )
 
     @pytest.mark.skipif(platform.system() == "Windows", reason="Unix-specific test")
@@ -33,23 +33,20 @@ class TestCloseSeleniumInstances:
         """Test closing Selenium instances on Unix."""
         from utils import close_running_selenium_instances
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0)
 
             close_running_selenium_instances()
 
-            mock_run.assert_called_once_with(
-                ["pkill", "firefox"],
-                check=False,
-                capture_output=True
-            )
+            mock_run.assert_called_once_with(["pkill", "firefox"], check=False, capture_output=True)
 
     def test_close_selenium_subprocess_error(self):
         """Test handling subprocess error when closing Selenium."""
-        from utils import close_running_selenium_instances
         import subprocess
 
-        with patch('subprocess.run', side_effect=subprocess.SubprocessError("Process error")):
+        from utils import close_running_selenium_instances
+
+        with patch("subprocess.run", side_effect=subprocess.SubprocessError("Process error")):
             # Should not raise exception, just log error
             close_running_selenium_instances()
 
@@ -57,7 +54,7 @@ class TestCloseSeleniumInstances:
         """Test handling general exception when closing Selenium."""
         from utils import close_running_selenium_instances
 
-        with patch('subprocess.run', side_effect=Exception("Unexpected error")):
+        with patch("subprocess.run", side_effect=Exception("Unexpected error")):
             # Should not raise exception, just log error
             close_running_selenium_instances()
 
@@ -94,8 +91,8 @@ class TestRemTempFiles:
 
     def test_rem_temp_files(self, temp_dir):
         """Test removing temporary files while keeping JSON files."""
-        from utils import rem_temp_files
         import config
+        from utils import rem_temp_files
 
         # Setup .mp directory with various files
         mp_dir = temp_dir / ".mp"
@@ -108,7 +105,7 @@ class TestRemTempFiles:
         (mp_dir / "temp2.mp4").write_text("video")
         (mp_dir / "image.png").write_text("image")
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             rem_temp_files()
 
         # Check that JSON files remain
@@ -122,13 +119,13 @@ class TestRemTempFiles:
 
     def test_rem_temp_files_empty_directory(self, temp_dir):
         """Test removing temp files from empty directory."""
-        from utils import rem_temp_files
         import config
+        from utils import rem_temp_files
 
         mp_dir = temp_dir / ".mp"
         mp_dir.mkdir()
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             # Should not raise exception
             rem_temp_files()
 
@@ -138,15 +135,15 @@ class TestFetchSongs:
 
     def test_fetch_songs_directory_exists(self, temp_dir):
         """Test that fetch_songs skips download if directory exists."""
-        from utils import fetch_songs
         import config
+        from utils import fetch_songs
 
         # Create Songs directory
         songs_dir = temp_dir / "Songs"
         songs_dir.mkdir()
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
-            with patch('requests.get') as mock_get:
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+            with patch("requests.get") as mock_get:
                 fetch_songs()
 
                 # Should not make request if directory exists
@@ -154,24 +151,24 @@ class TestFetchSongs:
 
     def test_fetch_songs_downloads_and_extracts(self, temp_dir):
         """Test that fetch_songs downloads and extracts songs."""
-        from utils import fetch_songs
         import config
+        from utils import fetch_songs
 
         # Mock response
         mock_response = MagicMock()
         mock_response.content = b"fake zip content"
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
-            with patch('requests.get', return_value=mock_response):
-                with patch('zipfile.ZipFile') as mock_zipfile:
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+            with patch("requests.get", return_value=mock_response):
+                with patch("zipfile.ZipFile") as mock_zipfile:
                     mock_zip = MagicMock()
                     mock_zipfile.return_value.__enter__.return_value = mock_zip
 
                     # Create a real temp zip file for the test
                     songs_dir = temp_dir / "Songs"
 
-                    with patch('builtins.open', mock_open()) as mock_file:
-                        with patch('os.remove'):
+                    with patch("builtins.open", mock_open()) as mock_file:
+                        with patch("os.remove"):
                             fetch_songs()
 
                     # Verify directory was created
@@ -179,27 +176,28 @@ class TestFetchSongs:
 
     def test_fetch_songs_network_error(self, temp_dir):
         """Test handling network error when fetching songs."""
-        from utils import fetch_songs
-        import config
         import requests
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
-            with patch('requests.get', side_effect=requests.RequestException("Network error")):
+        import config
+        from utils import fetch_songs
+
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+            with patch("requests.get", side_effect=requests.RequestException("Network error")):
                 # Should not raise exception, just log error
                 fetch_songs()
 
     def test_fetch_songs_bad_zip(self, temp_dir):
         """Test handling bad zip file when fetching songs."""
-        from utils import fetch_songs
         import config
+        from utils import fetch_songs
 
         mock_response = MagicMock()
         mock_response.content = b"not a real zip"
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
-            with patch('requests.get', return_value=mock_response):
-                with patch('zipfile.ZipFile', side_effect=zipfile.BadZipFile("Bad zip")):
-                    with patch('builtins.open', mock_open()):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+            with patch("requests.get", return_value=mock_response):
+                with patch("zipfile.ZipFile", side_effect=zipfile.BadZipFile("Bad zip")):
+                    with patch("builtins.open", mock_open()):
                         # Should not raise exception
                         fetch_songs()
 
@@ -209,8 +207,8 @@ class TestChooseRandomSong:
 
     def test_choose_random_song_success(self, temp_dir):
         """Test choosing a random song successfully."""
-        from utils import choose_random_song
         import config
+        from utils import choose_random_song
 
         # Setup Songs directory with files
         songs_dir = temp_dir / "Songs"
@@ -219,7 +217,7 @@ class TestChooseRandomSong:
         (songs_dir / "song2.mp3").write_text("music2")
         (songs_dir / "song3.mp3").write_text("music3")
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             result = choose_random_song()
 
         assert result is not None
@@ -228,8 +226,8 @@ class TestChooseRandomSong:
 
     def test_choose_random_song_multiple_calls(self, temp_dir):
         """Test that multiple calls can return different songs."""
-        from utils import choose_random_song
         import config
+        from utils import choose_random_song
 
         # Setup Songs directory with multiple files
         songs_dir = temp_dir / "Songs"
@@ -237,7 +235,7 @@ class TestChooseRandomSong:
         for i in range(10):
             (songs_dir / f"song{i}.mp3").write_text(f"music{i}")
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             results = [choose_random_song() for _ in range(5)]
 
         # All results should be valid paths
@@ -247,39 +245,39 @@ class TestChooseRandomSong:
 
     def test_choose_random_song_directory_not_found(self, temp_dir):
         """Test handling missing Songs directory."""
-        from utils import choose_random_song
         import config
+        from utils import choose_random_song
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             result = choose_random_song()
 
         assert result is None
 
     def test_choose_random_song_empty_directory(self, temp_dir):
         """Test handling empty Songs directory."""
-        from utils import choose_random_song
         import config
+        from utils import choose_random_song
 
         # Create empty Songs directory
         songs_dir = temp_dir / "Songs"
         songs_dir.mkdir()
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             result = choose_random_song()
 
         assert result is None
 
     def test_choose_random_song_single_file(self, temp_dir):
         """Test choosing song when only one file exists."""
-        from utils import choose_random_song
         import config
+        from utils import choose_random_song
 
         # Setup Songs directory with single file
         songs_dir = temp_dir / "Songs"
         songs_dir.mkdir()
         (songs_dir / "only_song.mp3").write_text("music")
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             result = choose_random_song()
 
         assert result is not None

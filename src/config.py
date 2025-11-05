@@ -1,9 +1,10 @@
+import json
+import logging
 import os
 import sys
-import json
+from typing import Any, Dict, Optional
+
 import srt_equalizer
-import logging
-from typing import Optional, Dict, Any
 from termcolor import colored
 
 ROOT_DIR = os.path.dirname(sys.path[0])
@@ -16,7 +17,8 @@ class ConfigManager:
 
     Optionally supports Pydantic validation for type safety and early error detection.
     """
-    _instance: Optional['ConfigManager'] = None
+
+    _instance: Optional["ConfigManager"] = None
     _config: Optional[Dict[str, Any]] = None
     _config_path: str = None
     _validated: bool = False
@@ -77,8 +79,9 @@ class ConfigManager:
             True
         """
         try:
-            from config_schema import validate_config
             from pydantic import ValidationError
+
+            from config_schema import validate_config
 
             # Validate the configuration
             validated_config = validate_config(cls._config)
@@ -245,7 +248,9 @@ def get_zip_url() -> str:
     Returns:
         url (str): The URL to the zip file
     """
-    return _config.get("zip_url", "https://filebin.net/bb9ewdtckolsf3sg/drive-download-20240209T180019Z-001.zip")
+    return _config.get(
+        "zip_url", "https://filebin.net/bb9ewdtckolsf3sg/drive-download-20240209T180019Z-001.zip"
+    )
 
 
 def get_is_for_kids() -> bool:

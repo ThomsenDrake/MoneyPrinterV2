@@ -1,26 +1,28 @@
 """
 Unit tests for BrowserFactory (src/browser_factory.py).
 """
-import pytest
-from unittest.mock import patch, MagicMock, Mock
+
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 
 class TestBrowserFactory:
     """Tests for BrowserFactory class."""
 
-    @patch('browser_factory.webdriver.Firefox')
-    @patch('browser_factory.Service')
-    @patch('browser_factory.GeckoDriverManager')
-    @patch('browser_factory.Options')
-    @patch('browser_factory.webdriver.FirefoxProfile')
+    @patch("browser_factory.webdriver.Firefox")
+    @patch("browser_factory.Service")
+    @patch("browser_factory.GeckoDriverManager")
+    @patch("browser_factory.Options")
+    @patch("browser_factory.webdriver.FirefoxProfile")
     def test_create_firefox_browser_with_profile_object(
         self,
         mock_profile_class,
         mock_options_class,
         mock_gecko_manager,
         mock_service_class,
-        mock_firefox
+        mock_firefox,
     ):
         """Test creating Firefox browser with FirefoxProfile object."""
         from browser_factory import BrowserFactory
@@ -42,9 +44,7 @@ class TestBrowserFactory:
 
         # Create browser
         result = BrowserFactory.create_firefox_browser(
-            profile_path="/path/to/profile",
-            headless=False,
-            use_profile_object=True
+            profile_path="/path/to/profile", headless=False, use_profile_object=True
         )
 
         # Verify behavior
@@ -53,16 +53,12 @@ class TestBrowserFactory:
         mock_firefox.assert_called_once_with(service=mock_service, options=mock_options)
         assert result == mock_browser
 
-    @patch('browser_factory.webdriver.Firefox')
-    @patch('browser_factory.Service')
-    @patch('browser_factory.GeckoDriverManager')
-    @patch('browser_factory.Options')
+    @patch("browser_factory.webdriver.Firefox")
+    @patch("browser_factory.Service")
+    @patch("browser_factory.GeckoDriverManager")
+    @patch("browser_factory.Options")
     def test_create_firefox_browser_with_profile_argument(
-        self,
-        mock_options_class,
-        mock_gecko_manager,
-        mock_service_class,
-        mock_firefox
+        self, mock_options_class, mock_gecko_manager, mock_service_class, mock_firefox
     ):
         """Test creating Firefox browser with profile argument."""
         from browser_factory import BrowserFactory
@@ -81,9 +77,7 @@ class TestBrowserFactory:
 
         # Create browser
         result = BrowserFactory.create_firefox_browser(
-            profile_path="/path/to/profile",
-            headless=False,
-            use_profile_object=False
+            profile_path="/path/to/profile", headless=False, use_profile_object=False
         )
 
         # Verify behavior
@@ -93,18 +87,18 @@ class TestBrowserFactory:
         mock_firefox.assert_called_once_with(service=mock_service, options=mock_options)
         assert result == mock_browser
 
-    @patch('browser_factory.webdriver.Firefox')
-    @patch('browser_factory.Service')
-    @patch('browser_factory.GeckoDriverManager')
-    @patch('browser_factory.Options')
-    @patch('browser_factory.webdriver.FirefoxProfile')
+    @patch("browser_factory.webdriver.Firefox")
+    @patch("browser_factory.Service")
+    @patch("browser_factory.GeckoDriverManager")
+    @patch("browser_factory.Options")
+    @patch("browser_factory.webdriver.FirefoxProfile")
     def test_create_firefox_browser_headless(
         self,
         mock_profile_class,
         mock_options_class,
         mock_gecko_manager,
         mock_service_class,
-        mock_firefox
+        mock_firefox,
     ):
         """Test creating Firefox browser in headless mode."""
         from browser_factory import BrowserFactory
@@ -126,25 +120,19 @@ class TestBrowserFactory:
 
         # Create browser with headless=True
         result = BrowserFactory.create_firefox_browser(
-            profile_path="/path/to/profile",
-            headless=True,
-            use_profile_object=True
+            profile_path="/path/to/profile", headless=True, use_profile_object=True
         )
 
         # Verify headless argument was added
         mock_options.add_argument.assert_called_with("--headless")
         assert result == mock_browser
 
-    @patch('browser_factory.webdriver.Firefox')
-    @patch('browser_factory.Service')
-    @patch('browser_factory.GeckoDriverManager')
-    @patch('browser_factory.Options')
+    @patch("browser_factory.webdriver.Firefox")
+    @patch("browser_factory.Service")
+    @patch("browser_factory.GeckoDriverManager")
+    @patch("browser_factory.Options")
     def test_create_firefox_browser_exception(
-        self,
-        mock_options_class,
-        mock_gecko_manager,
-        mock_service_class,
-        mock_firefox
+        self, mock_options_class, mock_gecko_manager, mock_service_class, mock_firefox
     ):
         """Test handling exception during browser creation."""
         from browser_factory import BrowserFactory
@@ -154,24 +142,19 @@ class TestBrowserFactory:
 
         # Verify exception is raised
         with pytest.raises(Exception, match="Browser creation failed"):
-            BrowserFactory.create_firefox_browser(
-                profile_path="/path/to/profile",
-                headless=False
-            )
+            BrowserFactory.create_firefox_browser(profile_path="/path/to/profile", headless=False)
 
-    @patch('browser_factory.GeckoDriverManager')
+    @patch("browser_factory.GeckoDriverManager")
     def test_geckodriver_manager_called(self, mock_gecko_manager):
         """Test that GeckoDriverManager is called to install driver."""
         from browser_factory import BrowserFactory
 
         mock_gecko_manager.return_value.install.return_value = "/path/to/driver"
 
-        with patch('browser_factory.webdriver.Firefox'):
-            with patch('browser_factory.Options'):
-                with patch('browser_factory.webdriver.FirefoxProfile'):
-                    BrowserFactory.create_firefox_browser(
-                        profile_path="/path/to/profile"
-                    )
+        with patch("browser_factory.webdriver.Firefox"):
+            with patch("browser_factory.Options"):
+                with patch("browser_factory.webdriver.FirefoxProfile"):
+                    BrowserFactory.create_firefox_browser(profile_path="/path/to/profile")
 
         mock_gecko_manager.return_value.install.assert_called_once()
 
@@ -179,7 +162,7 @@ class TestBrowserFactory:
 class TestBrowserContextManager:
     """Tests for BrowserContextManager class."""
 
-    @patch('browser_factory.BrowserFactory.create_firefox_browser')
+    @patch("browser_factory.BrowserFactory.create_firefox_browser")
     def test_context_manager_creates_browser(self, mock_create_browser):
         """Test that context manager creates browser on entry."""
         from browser_factory import BrowserContextManager
@@ -190,12 +173,10 @@ class TestBrowserContextManager:
         with BrowserContextManager("/path/to/profile") as browser:
             assert browser == mock_browser
             mock_create_browser.assert_called_once_with(
-                profile_path="/path/to/profile",
-                headless=False,
-                use_profile_object=True
+                profile_path="/path/to/profile", headless=False, use_profile_object=True
             )
 
-    @patch('browser_factory.BrowserFactory.create_firefox_browser')
+    @patch("browser_factory.BrowserFactory.create_firefox_browser")
     def test_context_manager_closes_browser(self, mock_create_browser):
         """Test that context manager closes browser on exit."""
         from browser_factory import BrowserContextManager
@@ -208,7 +189,7 @@ class TestBrowserContextManager:
 
         mock_browser.quit.assert_called_once()
 
-    @patch('browser_factory.BrowserFactory.create_firefox_browser')
+    @patch("browser_factory.BrowserFactory.create_firefox_browser")
     def test_context_manager_closes_browser_on_exception(self, mock_create_browser):
         """Test that context manager closes browser even if exception occurs."""
         from browser_factory import BrowserContextManager
@@ -223,7 +204,7 @@ class TestBrowserContextManager:
         # Browser should still be closed
         mock_browser.quit.assert_called_once()
 
-    @patch('browser_factory.BrowserFactory.create_firefox_browser')
+    @patch("browser_factory.BrowserFactory.create_firefox_browser")
     def test_context_manager_with_headless(self, mock_create_browser):
         """Test context manager with headless mode."""
         from browser_factory import BrowserContextManager
@@ -235,12 +216,10 @@ class TestBrowserContextManager:
             pass
 
         mock_create_browser.assert_called_once_with(
-            profile_path="/path/to/profile",
-            headless=True,
-            use_profile_object=True
+            profile_path="/path/to/profile", headless=True, use_profile_object=True
         )
 
-    @patch('browser_factory.BrowserFactory.create_firefox_browser')
+    @patch("browser_factory.BrowserFactory.create_firefox_browser")
     def test_context_manager_with_profile_argument(self, mock_create_browser):
         """Test context manager with profile argument method."""
         from browser_factory import BrowserContextManager
@@ -248,19 +227,14 @@ class TestBrowserContextManager:
         mock_browser = MagicMock()
         mock_create_browser.return_value = mock_browser
 
-        with BrowserContextManager(
-            "/path/to/profile",
-            use_profile_object=False
-        ) as browser:
+        with BrowserContextManager("/path/to/profile", use_profile_object=False) as browser:
             pass
 
         mock_create_browser.assert_called_once_with(
-            profile_path="/path/to/profile",
-            headless=False,
-            use_profile_object=False
+            profile_path="/path/to/profile", headless=False, use_profile_object=False
         )
 
-    @patch('browser_factory.BrowserFactory.create_firefox_browser')
+    @patch("browser_factory.BrowserFactory.create_firefox_browser")
     def test_context_manager_handles_quit_exception(self, mock_create_browser):
         """Test that context manager handles exception during quit."""
         from browser_factory import BrowserContextManager
@@ -273,7 +247,7 @@ class TestBrowserContextManager:
         with BrowserContextManager("/path/to/profile") as browser:
             pass
 
-    @patch('browser_factory.BrowserFactory.create_firefox_browser')
+    @patch("browser_factory.BrowserFactory.create_firefox_browser")
     def test_context_manager_does_not_suppress_exceptions(self, mock_create_browser):
         """Test that context manager doesn't suppress user exceptions."""
         from browser_factory import BrowserContextManager
@@ -285,7 +259,7 @@ class TestBrowserContextManager:
             with BrowserContextManager("/path/to/profile") as browser:
                 raise RuntimeError("User exception")
 
-    @patch('browser_factory.BrowserFactory.create_firefox_browser')
+    @patch("browser_factory.BrowserFactory.create_firefox_browser")
     def test_context_manager_parameters(self, mock_create_browser):
         """Test that context manager passes all parameters correctly."""
         from browser_factory import BrowserContextManager
@@ -294,9 +268,7 @@ class TestBrowserContextManager:
         mock_create_browser.return_value = mock_browser
 
         manager = BrowserContextManager(
-            profile_path="/custom/profile",
-            headless=True,
-            use_profile_object=False
+            profile_path="/custom/profile", headless=True, use_profile_object=False
         )
 
         assert manager.profile_path == "/custom/profile"
@@ -307,7 +279,5 @@ class TestBrowserContextManager:
             pass
 
         mock_create_browser.assert_called_once_with(
-            profile_path="/custom/profile",
-            headless=True,
-            use_profile_object=False
+            profile_path="/custom/profile", headless=True, use_profile_object=False
         )

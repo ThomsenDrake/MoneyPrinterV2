@@ -1,5 +1,7 @@
-from config import ROOT_DIR
 from termcolor import colored
+
+from config import ROOT_DIR
+
 
 def print_banner() -> None:
     """

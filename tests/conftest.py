@@ -1,16 +1,18 @@
 """
 Pytest configuration and shared fixtures for MoneyPrinterV2 tests.
 """
+
+import json
 import os
 import sys
-import json
 import tempfile
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
+import pytest
 
 # Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
 @pytest.fixture
@@ -36,10 +38,7 @@ def mock_config_data():
         "font": "/path/to/font.ttf",
         "scraper_timeout": 300,
         "n_threads": 4,
-        "email": {
-            "username": "test@example.com",
-            "password": "test-password"
-        }
+        "email": {"username": "test@example.com", "password": "test-password"},
     }
 
 
@@ -47,7 +46,7 @@ def mock_config_data():
 def mock_config_file(temp_dir, mock_config_data):
     """Create a temporary config.json file."""
     config_path = temp_dir / "config.json"
-    with open(config_path, 'w') as f:
+    with open(config_path, "w") as f:
         json.dump(mock_config_data, f, indent=4)
     return config_path
 
@@ -59,7 +58,7 @@ def mock_cache_data():
         "test_niche": {
             "hook": "Test Hook",
             "topics": ["Topic 1", "Topic 2", "Topic 3"],
-            "next_index": 1
+            "next_index": 1,
         }
     }
 
@@ -68,7 +67,7 @@ def mock_cache_data():
 def mock_cache_file(temp_dir, mock_cache_data):
     """Create a temporary cache.json file."""
     cache_path = temp_dir / "cache.json"
-    with open(cache_path, 'w') as f:
+    with open(cache_path, "w") as f:
         json.dump(mock_cache_data, f, indent=4)
     return cache_path
 
@@ -112,11 +111,7 @@ def mock_requests(monkeypatch):
     monkeypatch.setattr("requests.get", mock_get)
     monkeypatch.setattr("requests.post", mock_post)
 
-    return {
-        "get": mock_get,
-        "post": mock_post,
-        "response": mock_response
-    }
+    return {"get": mock_get, "post": mock_post, "response": mock_response}
 
 
 @pytest.fixture(autouse=True)
@@ -126,5 +121,6 @@ def reset_config_singleton():
     yield
     # Reset singleton state after each test
     from config import ConfigManager
+
     ConfigManager._instance = None
     ConfigManager._config = None

@@ -1,10 +1,12 @@
 """
 Unit tests for configuration schema validation (src/config_schema.py).
 """
-import pytest
+
 import json
-from pydantic import ValidationError
 from pathlib import Path
+
+import pytest
+from pydantic import ValidationError
 
 
 class TestEmailCredentials:
@@ -14,10 +16,7 @@ class TestEmailCredentials:
         """Test creating valid email credentials."""
         from config_schema import EmailCredentials
 
-        creds = EmailCredentials(
-            username="test@example.com",
-            password="secure_password"
-        )
+        creds = EmailCredentials(username="test@example.com", password="secure_password")
 
         assert creds.username == "test@example.com"
         assert creds.password == "secure_password"
@@ -79,10 +78,7 @@ class TestConfigSchema:
             "is_for_kids": False,
             "twitter_language": "en",
             "scraper_timeout": 300,
-            "email": {
-                "username": "test@example.com",
-                "password": "password"
-            }
+            "email": {"username": "test@example.com", "password": "password"},
         }
 
         config = ConfigSchema(**config_data)
@@ -167,7 +163,7 @@ class TestConfigSchema:
         config_data = {
             "firefox_profile": "/path",
             "future_field": "some_value",
-            "another_new_field": 123
+            "another_new_field": 123,
         }
 
         config = ConfigSchema(**config_data)
@@ -186,17 +182,13 @@ class TestConfigSchema:
 
         # Valid nested email
         config = ConfigSchema(
-            firefox_profile="/path",
-            email={"username": "user@test.com", "password": "pass"}
+            firefox_profile="/path", email={"username": "user@test.com", "password": "pass"}
         )
         assert config.email.username == "user@test.com"
 
         # Invalid nested email
         with pytest.raises(ValidationError):
-            ConfigSchema(
-                firefox_profile="/path",
-                email={"username": "", "password": "pass"}
-            )
+            ConfigSchema(firefox_profile="/path", email={"username": "", "password": "pass"})
 
 
 class TestValidateConfigFunction:
@@ -206,11 +198,7 @@ class TestValidateConfigFunction:
         """Test validating valid configuration data."""
         from config_schema import validate_config
 
-        config_data = {
-            "firefox_profile": "/path/to/profile",
-            "verbose": True,
-            "threads": 4
-        }
+        config_data = {"firefox_profile": "/path/to/profile", "verbose": True, "threads": 4}
 
         config = validate_config(config_data)
 
@@ -222,10 +210,7 @@ class TestValidateConfigFunction:
         """Test validating invalid configuration data."""
         from config_schema import validate_config
 
-        config_data = {
-            "firefox_profile": "",  # Invalid
-            "threads": -1  # Invalid
-        }
+        config_data = {"firefox_profile": "", "threads": -1}  # Invalid  # Invalid
 
         with pytest.raises(ValidationError):
             validate_config(config_data)
@@ -251,13 +236,9 @@ class TestValidateConfigFile:
         from config_schema import validate_config_file
 
         config_file = temp_dir / "config.json"
-        config_data = {
-            "firefox_profile": "/path/to/profile",
-            "verbose": True,
-            "threads": 2
-        }
+        config_data = {"firefox_profile": "/path/to/profile", "verbose": True, "threads": 2}
 
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             json.dump(config_data, f)
 
         config = validate_config_file(str(config_file))
@@ -281,12 +262,9 @@ class TestValidateConfigFile:
         from config_schema import validate_config_file
 
         config_file = temp_dir / "config.json"
-        config_data = {
-            "firefox_profile": "",  # Invalid
-            "threads": 100  # Invalid
-        }
+        config_data = {"firefox_profile": "", "threads": 100}  # Invalid  # Invalid
 
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             json.dump(config_data, f)
 
         with pytest.raises(ValidationError):

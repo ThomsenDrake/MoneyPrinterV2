@@ -4,8 +4,10 @@ Configuration schema validation using Pydantic.
 This module provides data validation and type checking for config.json
 to catch configuration errors early and provide clear error messages.
 """
+
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class EmailCredentials(BaseModel):
@@ -14,7 +16,7 @@ class EmailCredentials(BaseModel):
     username: str = Field(..., min_length=1, description="Email username")
     password: str = Field(..., min_length=1, description="Email password")
 
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
 
 class ConfigSchema(BaseModel):
@@ -36,39 +38,29 @@ class ConfigSchema(BaseModel):
     # AI/LLM configuration
     llm: Optional[str] = Field(default=None, description="LLM model to use")
     mistral_api_key: str = Field(
-        default="",
-        description="Mistral AI API key (should use env var instead)"
+        default="", description="Mistral AI API key (should use env var instead)"
     )
     venice_api_key: str = Field(
-        default="",
-        description="Venice AI API key (should use env var instead)"
+        default="", description="Venice AI API key (should use env var instead)"
     )
     assembly_ai_api_key: str = Field(
-        default="",
-        description="AssemblyAI API key (should use env var instead)"
+        default="", description="AssemblyAI API key (should use env var instead)"
     )
 
     # Image generation
     image_model: Optional[str] = Field(default=None, description="Image generation model")
     image_prompt_llm: Optional[str] = Field(
-        default=None,
-        description="LLM for image prompt generation"
+        default=None, description="LLM for image prompt generation"
     )
 
     # Media settings
     font: Optional[str] = Field(default=None, description="Path to font file for subtitles")
-    imagemagick_path: Optional[str] = Field(
-        default=None,
-        description="Path to ImageMagick binary"
-    )
+    imagemagick_path: Optional[str] = Field(default=None, description="Path to ImageMagick binary")
     threads: int = Field(default=1, ge=1, le=32, description="Number of threads for processing")
 
     # Content settings
     script_sentence_length: int = Field(
-        default=4,
-        ge=1,
-        le=20,
-        description="Target sentence length for scripts"
+        default=4, ge=1, le=20, description="Target sentence length for scripts"
     )
 
     # Platform-specific
@@ -78,48 +70,40 @@ class ConfigSchema(BaseModel):
     # External resources
     zip_url: Optional[str] = Field(
         default="https://filebin.net/bb9ewdtckolsf3sg/drive-download-20240209T180019Z-001.zip",
-        description="URL to download songs"
+        description="URL to download songs",
     )
     google_maps_scraper: Optional[str] = Field(
-        default=None,
-        description="URL to Google Maps scraper"
+        default=None, description="URL to Google Maps scraper"
     )
     google_maps_scraper_niche: Optional[str] = Field(
-        default=None,
-        description="Niche for Google Maps scraper"
+        default=None, description="Niche for Google Maps scraper"
     )
 
     # Scraper settings
     scraper_timeout: int = Field(
-        default=300,
-        ge=30,
-        le=3600,
-        description="Timeout for scraper operations (seconds)"
+        default=300, ge=30, le=3600, description="Timeout for scraper operations (seconds)"
     )
 
     # Outreach settings
     outreach_message_subject: Optional[str] = Field(
-        default=None,
-        description="Subject line for outreach emails"
+        default=None, description="Subject line for outreach emails"
     )
     outreach_message_body_file: Optional[str] = Field(
-        default=None,
-        description="Path to outreach email body template"
+        default=None, description="Path to outreach email body template"
     )
 
     # Email credentials
     email: Optional[EmailCredentials] = Field(
-        default=None,
-        description="Email credentials for automation"
+        default=None, description="Email credentials for automation"
     )
 
     model_config = ConfigDict(
-        extra='allow',  # Allow extra fields for forward compatibility
+        extra="allow",  # Allow extra fields for forward compatibility
         validate_assignment=True,  # Validate on attribute assignment
         str_strip_whitespace=True,  # Strip whitespace from strings
     )
 
-    @field_validator('firefox_profile')
+    @field_validator("firefox_profile")
     @classmethod
     def validate_firefox_profile(cls, v: str) -> str:
         """Validate Firefox profile path is not empty."""
@@ -127,7 +111,7 @@ class ConfigSchema(BaseModel):
             raise ValueError("Firefox profile path cannot be empty")
         return v
 
-    @field_validator('twitter_language')
+    @field_validator("twitter_language")
     @classmethod
     def validate_language_code(cls, v: str) -> str:
         """Validate language code format."""
@@ -135,7 +119,7 @@ class ConfigSchema(BaseModel):
             raise ValueError("Language code must be at least 2 characters")
         return v.lower()
 
-    @field_validator('threads')
+    @field_validator("threads")
     @classmethod
     def validate_threads(cls, v: int) -> int:
         """Validate thread count is reasonable."""
@@ -145,7 +129,7 @@ class ConfigSchema(BaseModel):
             raise ValueError("Thread count should not exceed 32")
         return v
 
-    @field_validator('scraper_timeout')
+    @field_validator("scraper_timeout")
     @classmethod
     def validate_timeout(cls, v: int) -> int:
         """Validate timeout is within reasonable bounds."""
@@ -200,7 +184,7 @@ def validate_config_file(file_path: str) -> ConfigSchema:
     """
     import json
 
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         config_data = json.load(f)
 
     return validate_config(config_data)

@@ -1,12 +1,13 @@
 # RUN THIS N AMOUNT OF TIMES
 import sys
 
-from status import *
 from cache import get_accounts
-from config import get_verbose
 from classes.Tts import TTS
 from classes.Twitter import Twitter
 from classes.YouTube import YouTube
+from config import get_verbose
+from status import *
+
 
 def main():
     """Main function to post content to Twitter or upload videos to YouTube.
@@ -25,7 +26,8 @@ def main():
         None. The function uses command-line arguments accessed via sys.argv.
 
     Returns:
-        None. The function performs operations based on the purpose and account UUID and does not return any value."""
+        None. The function performs operations based on the purpose and account UUID and does not return any value.
+    """
     purpose = str(sys.argv[1])
     account_id = str(sys.argv[2])
 
@@ -41,12 +43,7 @@ def main():
             if acc["id"] == account_id:
                 if verbose:
                     info("Initializing Twitter...")
-                twitter = Twitter(
-                    acc["id"],
-                    acc["nickname"],
-                    acc["firefox_profile"],
-                    acc["topic"]
-                )
+                twitter = Twitter(acc["id"], acc["nickname"], acc["firefox_profile"], acc["topic"])
                 twitter.post()
                 if verbose:
                     success("Done posting.")
@@ -68,7 +65,7 @@ def main():
                     acc["nickname"],
                     acc["firefox_profile"],
                     acc["niche"],
-                    acc["language"]
+                    acc["language"],
                 )
                 youtube.generate_video(tts)
                 youtube.upload_video()
@@ -78,6 +75,7 @@ def main():
     else:
         error("Invalid Purpose, exiting...")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

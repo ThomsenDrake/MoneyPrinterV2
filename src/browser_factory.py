@@ -4,11 +4,13 @@ Browser Factory for creating and managing Selenium browser instances.
 This module eliminates code duplication across YouTube, Twitter, and AFM classes
 by centralizing browser initialization logic.
 """
+
 import logging
 from typing import Optional
+
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
 from webdriver_manager.firefox import GeckoDriverManager
 
 
@@ -22,9 +24,7 @@ class BrowserFactory:
 
     @staticmethod
     def create_firefox_browser(
-        profile_path: str,
-        headless: bool = False,
-        use_profile_object: bool = True
+        profile_path: str, headless: bool = False, use_profile_object: bool = True
     ) -> webdriver.Firefox:
         """
         Create a Firefox browser instance with the specified configuration.
@@ -95,12 +95,7 @@ class BrowserContextManager:
         ...     # browser automatically closed on exit
     """
 
-    def __init__(
-        self,
-        profile_path: str,
-        headless: bool = False,
-        use_profile_object: bool = True
-    ):
+    def __init__(self, profile_path: str, headless: bool = False, use_profile_object: bool = True):
         """
         Initialize the browser context manager.
 
@@ -119,7 +114,7 @@ class BrowserContextManager:
         self.browser = BrowserFactory.create_firefox_browser(
             profile_path=self.profile_path,
             headless=self.headless,
-            use_profile_object=self.use_profile_object
+            use_profile_object=self.use_profile_object,
         )
         return self.browser
 

@@ -4,8 +4,10 @@ LLM Service wrapper for AI model interactions.
 This module eliminates code duplication across YouTube, Twitter, and AFM classes
 by centralizing LLM client initialization and interaction logic.
 """
+
 import logging
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from mistralai import Mistral
 
 
@@ -20,7 +22,7 @@ class LLMService:
     multiple client instances.
     """
 
-    _instances: Dict[str, 'LLMService'] = {}
+    _instances: Dict[str, "LLMService"] = {}
 
     def __init__(self, api_key: str, default_model: str = "mistral-medium-latest"):
         """
@@ -38,7 +40,9 @@ class LLMService:
         self._client: Optional[Mistral] = None
 
     @classmethod
-    def get_instance(cls, api_key: str, default_model: str = "mistral-medium-latest") -> 'LLMService':
+    def get_instance(
+        cls, api_key: str, default_model: str = "mistral-medium-latest"
+    ) -> "LLMService":
         """
         Get or create an LLM service instance for the given API key.
 
@@ -79,7 +83,7 @@ class LLMService:
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
     ) -> str:
         """
         Perform a chat completion using the LLM.
@@ -107,11 +111,7 @@ class LLMService:
             model_to_use = model or self.default_model
 
             # Prepare API call parameters
-            params = {
-                "model": model_to_use,
-                "messages": messages,
-                "temperature": temperature
-            }
+            params = {"model": model_to_use, "messages": messages, "temperature": temperature}
 
             if max_tokens is not None:
                 params["max_tokens"] = max_tokens
@@ -130,10 +130,7 @@ class LLMService:
             raise
 
     def generate_script(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        model: Optional[str] = None
+        self, system_prompt: str, user_prompt: str, model: Optional[str] = None
     ) -> str:
         """
         Generate a script using the LLM.
@@ -156,7 +153,7 @@ class LLMService:
         """
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
+            {"role": "user", "content": user_prompt},
         ]
         return self.chat_completion(messages, model=model)
 

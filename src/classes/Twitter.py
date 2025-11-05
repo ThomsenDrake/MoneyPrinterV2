@@ -1,30 +1,34 @@
 import re
 import sys
 import time
-from mistralai import Mistral
-
-from cache import *
-from config import *
-from status import *
-from constants import *
-from typing import List
 from datetime import datetime
-from termcolor import colored
-from selenium_firefox import *
+from typing import List
+
+from mistralai import Mistral
 from selenium import webdriver
 from selenium.common import exceptions
 from selenium.webdriver.common import keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
+from selenium_firefox import *
+from termcolor import colored
 from webdriver_manager.firefox import GeckoDriverManager
+
+from cache import *
+from config import *
+from constants import *
+from status import *
 
 
 class Twitter:
     """
     Class for the Bot, that grows a Twitter account.
     """
-    def __init__(self, account_uuid: str, account_nickname: str, fp_profile_path: str, topic: str) -> None:
+
+    def __init__(
+        self, account_uuid: str, account_nickname: str, fp_profile_path: str, topic: str
+    ) -> None:
         """
         Initializes the Twitter Bot.
 
@@ -43,7 +47,7 @@ class Twitter:
 
         # Initialize the Firefox profile
         self.options: Options = Options()
-        
+
         # Set headless state of browser
         if get_headless():
             self.options.add_argument("--headless")
@@ -56,7 +60,9 @@ class Twitter:
         self.service: Service = Service(GeckoDriverManager().install())
 
         # Initialize the browser
-        self.browser: webdriver.Firefox = webdriver.Firefox(service=self.service, options=self.options)
+        self.browser: webdriver.Firefox = webdriver.Firefox(
+            service=self.service, options=self.options
+        )
 
     def post(self, text: str = None) -> None:
         """
@@ -86,7 +92,7 @@ class Twitter:
             time.sleep(3)
             bot.find_element(By.XPATH, "//a[@data-testid='SideNav_NewTweet_Button']").click()
 
-        time.sleep(2) 
+        time.sleep(2)
         body = post_content if text is None else text
 
         try:
@@ -104,13 +110,9 @@ class Twitter:
         time.sleep(4)
 
         # Add the post to the cache
-        self.add_post({
-            "content": post_content,
-            "date": now.strftime("%m/%d/%Y, %H:%M:%S")
-        })
+        self.add_post({"content": post_content, "date": now.strftime("%m/%d/%Y, %H:%M:%S")})
 
         success("Posted to Twitter successfully!")
-
 
     def get_posts(self) -> List[dict]:
         """
@@ -121,12 +123,10 @@ class Twitter:
         """
         if not os.path.exists(get_twitter_cache_path()):
             # Create the cache file
-            with open(get_twitter_cache_path(), 'w') as file:
-                json.dump({
-                    "posts": []
-                }, file, indent=4)
+            with open(get_twitter_cache_path(), "w") as file:
+                json.dump({"posts": []}, file, indent=4)
 
-        with open(get_twitter_cache_path(), 'r') as file:
+        with open(get_twitter_cache_path(), "r") as file:
             parsed = json.load(file)
 
             # Find our account
@@ -140,7 +140,7 @@ class Twitter:
 
                     # Return the posts
                     return posts
-        
+
     def add_post(self, post: dict) -> None:
         """
         Adds a post to the cache.
@@ -156,17 +156,16 @@ class Twitter:
 
         with open(get_twitter_cache_path(), "r") as file:
             previous_json = json.loads(file.read())
-            
+
             # Find our account
             accounts = previous_json["accounts"]
             for account in accounts:
                 if account["id"] == self.account_uuid:
                     account["posts"].append(post)
-            
+
             # Commit changes
             with open(get_twitter_cache_path(), "w") as f:
                 f.write(json.dumps(previous_json))
-            
 
     def generate_post(self) -> str:
         """
@@ -183,9 +182,9 @@ class Twitter:
                 messages=[
                     {
                         "role": "user",
-                        "content": f"Generate a Twitter post about: {self.topic} in {get_twitter_language()}. The Limit is 2 sentences. Choose a specific sub-topic of the provided topic."
+                        "content": f"Generate a Twitter post about: {self.topic} in {get_twitter_language()}. The Limit is 2 sentences. Choose a specific sub-topic of the provided topic.",
                     }
-                ]
+                ],
             )
 
             if get_verbose():
@@ -198,7 +197,7 @@ class Twitter:
                 sys.exit(1)
 
             # Apply Regex to remove all *
-            completion = re.sub(r"\*", "", completion).replace("\"", "")
+            completion = re.sub(r"\*", "", completion).replace('"', "")
 
             if get_verbose():
                 info(f"Length of post: {len(completion)}")

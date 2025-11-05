@@ -1,11 +1,13 @@
 """
 Unit tests for configuration management (src/config.py).
 """
-import os
+
 import json
-import pytest
-from unittest.mock import patch, mock_open
+import os
 import tempfile
+from unittest.mock import mock_open, patch
+
+import pytest
 
 
 class TestConfigManager:
@@ -24,7 +26,7 @@ class TestConfigManager:
         """Test getting a configuration value that exists."""
         from config import ConfigManager
 
-        with patch.object(ConfigManager, '_load_config') as mock_load:
+        with patch.object(ConfigManager, "_load_config") as mock_load:
             ConfigManager._config = mock_config_data
             manager = ConfigManager()
 
@@ -35,7 +37,7 @@ class TestConfigManager:
         """Test getting a configuration value with a missing key returns default."""
         from config import ConfigManager
 
-        with patch.object(ConfigManager, '_load_config') as mock_load:
+        with patch.object(ConfigManager, "_load_config") as mock_load:
             ConfigManager._config = mock_config_data
             manager = ConfigManager()
 
@@ -46,7 +48,7 @@ class TestConfigManager:
         """Test getting a nested configuration value."""
         from config import ConfigManager
 
-        with patch.object(ConfigManager, '_load_config') as mock_load:
+        with patch.object(ConfigManager, "_load_config") as mock_load:
             ConfigManager._config = mock_config_data
             manager = ConfigManager()
 
@@ -61,7 +63,7 @@ class TestConfigManager:
         ConfigManager._instance = None
         ConfigManager._config = None
 
-        with patch.object(ConfigManager, '_config_path', str(temp_dir / "nonexistent.json")):
+        with patch.object(ConfigManager, "_config_path", str(temp_dir / "nonexistent.json")):
             ConfigManager._load_config()
             assert ConfigManager._config == {}
 
@@ -71,7 +73,7 @@ class TestConfigManager:
 
         # Create invalid JSON file
         invalid_json_file = temp_dir / "invalid.json"
-        with open(invalid_json_file, 'w') as f:
+        with open(invalid_json_file, "w") as f:
             f.write("{invalid json content")
 
         ConfigManager._instance = None
@@ -94,10 +96,10 @@ class TestConfigManager:
         initial_verbose = ConfigManager._config.get("verbose")
 
         # Modify the config file
-        with open(mock_config_file, 'r') as f:
+        with open(mock_config_file, "r") as f:
             config_data = json.load(f)
         config_data["verbose"] = not initial_verbose
-        with open(mock_config_file, 'w') as f:
+        with open(mock_config_file, "w") as f:
             json.dump(config_data, f)
 
         # Reload and check
@@ -228,7 +230,7 @@ class TestFolderStructure:
         """Test detecting first time running when .mp folder doesn't exist."""
         from config import get_first_time_running
 
-        with patch('config.ROOT_DIR', str(temp_dir)):
+        with patch("config.ROOT_DIR", str(temp_dir)):
             result = get_first_time_running()
             assert result is True
 
@@ -240,7 +242,7 @@ class TestFolderStructure:
         mp_dir = temp_dir / ".mp"
         mp_dir.mkdir()
 
-        with patch('config.ROOT_DIR', str(temp_dir)):
+        with patch("config.ROOT_DIR", str(temp_dir)):
             result = get_first_time_running()
             assert result is False
 
@@ -248,8 +250,8 @@ class TestFolderStructure:
         """Test that assert_folder_structure creates .mp folder."""
         from config import assert_folder_structure
 
-        with patch('config.ROOT_DIR', str(temp_dir)):
-            with patch('config.get_verbose', return_value=False):
+        with patch("config.ROOT_DIR", str(temp_dir)):
+            with patch("config.get_verbose", return_value=False):
                 assert_folder_structure()
 
             mp_dir = temp_dir / ".mp"
@@ -264,8 +266,8 @@ class TestFolderStructure:
         mp_dir = temp_dir / ".mp"
         mp_dir.mkdir()
 
-        with patch('config.ROOT_DIR', str(temp_dir)):
-            with patch('config.get_verbose', return_value=False):
+        with patch("config.ROOT_DIR", str(temp_dir)):
+            with patch("config.get_verbose", return_value=False):
                 # Should not raise exception
                 assert_folder_structure()
 
@@ -277,26 +279,28 @@ class TestEqualizeSubtitles:
 
     def test_equalize_subtitles_calls_srt_equalizer(self, temp_dir):
         """Test that equalize_subtitles calls srt_equalizer correctly."""
-        from config import equalize_subtitles
         import srt_equalizer
+
+        from config import equalize_subtitles
 
         srt_file = temp_dir / "test.srt"
         srt_file.write_text("1\n00:00:00,000 --> 00:00:02,000\nTest subtitle\n")
 
-        with patch.object(srt_equalizer, 'equalize_srt_file') as mock_equalize:
+        with patch.object(srt_equalizer, "equalize_srt_file") as mock_equalize:
             equalize_subtitles(str(srt_file), max_chars=15)
 
             mock_equalize.assert_called_once_with(str(srt_file), str(srt_file), 15)
 
     def test_equalize_subtitles_default_max_chars(self, temp_dir):
         """Test equalize_subtitles uses default max_chars."""
-        from config import equalize_subtitles
         import srt_equalizer
+
+        from config import equalize_subtitles
 
         srt_file = temp_dir / "test.srt"
         srt_file.write_text("1\n00:00:00,000 --> 00:00:02,000\nTest\n")
 
-        with patch.object(srt_equalizer, 'equalize_srt_file') as mock_equalize:
+        with patch.object(srt_equalizer, "equalize_srt_file") as mock_equalize:
             equalize_subtitles(str(srt_file))
 
             mock_equalize.assert_called_once_with(str(srt_file), str(srt_file), 10)

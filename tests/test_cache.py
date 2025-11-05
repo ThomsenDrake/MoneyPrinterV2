@@ -1,12 +1,14 @@
 """
 Unit tests for cache management (src/cache.py).
 """
-import os
+
 import json
-import pytest
+import os
 import platform
-from unittest.mock import patch, MagicMock, mock_open
 from pathlib import Path
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 
 class TestFileLock:
@@ -16,13 +18,14 @@ class TestFileLock:
     def test_file_lock_unix(self, temp_dir):
         """Test file locking on Unix systems."""
         import fcntl
+
         from cache import FileLock
 
         test_file = temp_dir / "test.json"
         test_file.write_text("{}")
 
-        with open(test_file, 'r') as f:
-            with patch.object(fcntl, 'flock') as mock_flock:
+        with open(test_file, "r") as f:
+            with patch.object(fcntl, "flock") as mock_flock:
                 with FileLock(f):
                     mock_flock.assert_called_once_with(f.fileno(), fcntl.LOCK_EX)
 
@@ -30,13 +33,14 @@ class TestFileLock:
     def test_file_lock_windows(self, temp_dir):
         """Test file locking on Windows systems."""
         import msvcrt
+
         from cache import FileLock
 
         test_file = temp_dir / "test.json"
         test_file.write_text("{}")
 
-        with open(test_file, 'r') as f:
-            with patch.object(msvcrt, 'locking') as mock_locking:
+        with open(test_file, "r") as f:
+            with patch.object(msvcrt, "locking") as mock_locking:
                 with FileLock(f):
                     mock_locking.assert_called_once_with(f.fileno(), msvcrt.LK_LOCK, 1)
 
@@ -47,16 +51,18 @@ class TestFileLock:
         test_file = temp_dir / "test.json"
         test_file.write_text("{}")
 
-        with open(test_file, 'r') as f:
+        with open(test_file, "r") as f:
             if platform.system() == "Windows":
                 import msvcrt
-                with patch.object(msvcrt, 'locking', side_effect=IOError("Lock error")):
+
+                with patch.object(msvcrt, "locking", side_effect=IOError("Lock error")):
                     with pytest.raises(IOError):
                         with FileLock(f):
                             pass
             else:
                 import fcntl
-                with patch.object(fcntl, 'flock', side_effect=IOError("Lock error")):
+
+                with patch.object(fcntl, "flock", side_effect=IOError("Lock error")):
                     with pytest.raises(IOError):
                         with FileLock(f):
                             pass
@@ -71,7 +77,7 @@ class TestAtomicOperations:
 
         test_file = temp_dir / "test.json"
         test_data = {"key": "value", "number": 42}
-        with open(test_file, 'w') as f:
+        with open(test_file, "w") as f:
             json.dump(test_data, f)
 
         result = _atomic_read_json(str(test_file), {})
@@ -119,7 +125,7 @@ class TestAtomicOperations:
         _atomic_write_json(str(test_file), test_data)
 
         assert test_file.exists()
-        with open(test_file, 'r') as f:
+        with open(test_file, "r") as f:
             result = json.load(f)
         assert result == test_data
 
@@ -141,7 +147,7 @@ class TestAtomicOperations:
 
         test_file = temp_dir / "test.json"
         initial_data = {"count": 0, "items": []}
-        with open(test_file, 'w') as f:
+        with open(test_file, "w") as f:
             json.dump(initial_data, f)
 
         def update_fn(data):
@@ -151,7 +157,7 @@ class TestAtomicOperations:
 
         _atomic_update_json(str(test_file), update_fn, {})
 
-        with open(test_file, 'r') as f:
+        with open(test_file, "r") as f:
             result = json.load(f)
 
         assert result["count"] == 1
@@ -171,7 +177,7 @@ class TestAtomicOperations:
         _atomic_update_json(str(test_file), update_fn, default_data)
 
         assert test_file.exists()
-        with open(test_file, 'r') as f:
+        with open(test_file, "r") as f:
             result = json.load(f)
 
         assert result["initialized"] is True
@@ -183,48 +189,48 @@ class TestCachePaths:
 
     def test_get_cache_path(self):
         """Test getting cache path."""
-        from cache import get_cache_path
         import config
+        from cache import get_cache_path
 
-        with patch.object(config, 'ROOT_DIR', '/test/root'):
+        with patch.object(config, "ROOT_DIR", "/test/root"):
             result = get_cache_path()
-            assert result == '/test/root/.mp'
+            assert result == "/test/root/.mp"
 
     def test_get_youtube_cache_path(self):
         """Test getting YouTube cache path."""
-        from cache import get_youtube_cache_path
         import config
+        from cache import get_youtube_cache_path
 
-        with patch.object(config, 'ROOT_DIR', '/test/root'):
+        with patch.object(config, "ROOT_DIR", "/test/root"):
             result = get_youtube_cache_path()
-            assert result == '/test/root/.mp/youtube.json'
+            assert result == "/test/root/.mp/youtube.json"
 
     def test_get_twitter_cache_path(self):
         """Test getting Twitter cache path."""
-        from cache import get_twitter_cache_path
         import config
+        from cache import get_twitter_cache_path
 
-        with patch.object(config, 'ROOT_DIR', '/test/root'):
+        with patch.object(config, "ROOT_DIR", "/test/root"):
             result = get_twitter_cache_path()
-            assert result == '/test/root/.mp/twitter.json'
+            assert result == "/test/root/.mp/twitter.json"
 
     def test_get_afm_cache_path(self):
         """Test getting AFM cache path."""
-        from cache import get_afm_cache_path
         import config
+        from cache import get_afm_cache_path
 
-        with patch.object(config, 'ROOT_DIR', '/test/root'):
+        with patch.object(config, "ROOT_DIR", "/test/root"):
             result = get_afm_cache_path()
-            assert result == '/test/root/.mp/afm.json'
+            assert result == "/test/root/.mp/afm.json"
 
     def test_get_results_cache_path(self):
         """Test getting results cache path."""
-        from cache import get_results_cache_path
         import config
+        from cache import get_results_cache_path
 
-        with patch.object(config, 'ROOT_DIR', '/test/root'):
+        with patch.object(config, "ROOT_DIR", "/test/root"):
             result = get_results_cache_path()
-            assert result == '/test/root/.mp/scraper_results.csv'
+            assert result == "/test/root/.mp/scraper_results.csv"
 
 
 class TestAccountManagement:
@@ -232,22 +238,19 @@ class TestAccountManagement:
 
     def test_get_accounts_youtube(self, temp_dir):
         """Test getting YouTube accounts."""
-        from cache import get_accounts
         import config
+        from cache import get_accounts
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
         youtube_cache = cache_dir / "youtube.json"
 
-        test_accounts = [
-            {"id": "123", "name": "Account 1"},
-            {"id": "456", "name": "Account 2"}
-        ]
-        with open(youtube_cache, 'w') as f:
+        test_accounts = [{"id": "123", "name": "Account 1"}, {"id": "456", "name": "Account 2"}]
+        with open(youtube_cache, "w") as f:
             json.dump({"accounts": test_accounts}, f)
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             result = get_accounts("youtube")
 
         assert len(result) == 2
@@ -256,8 +259,8 @@ class TestAccountManagement:
 
     def test_get_accounts_twitter(self, temp_dir):
         """Test getting Twitter accounts."""
-        from cache import get_accounts
         import config
+        from cache import get_accounts
 
         # Setup
         cache_dir = temp_dir / ".mp"
@@ -265,10 +268,10 @@ class TestAccountManagement:
         twitter_cache = cache_dir / "twitter.json"
 
         test_accounts = [{"id": "789", "handle": "@test"}]
-        with open(twitter_cache, 'w') as f:
+        with open(twitter_cache, "w") as f:
             json.dump({"accounts": test_accounts}, f)
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             result = get_accounts("twitter")
 
         assert len(result) == 1
@@ -276,10 +279,10 @@ class TestAccountManagement:
 
     def test_get_accounts_empty_cache(self, temp_dir):
         """Test getting accounts when cache is empty."""
-        from cache import get_accounts
         import config
+        from cache import get_accounts
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             result = get_accounts("youtube")
 
         assert result == []
@@ -293,14 +296,14 @@ class TestAccountManagement:
 
     def test_add_account_youtube(self, temp_dir):
         """Test adding YouTube account."""
-        from cache import add_account, get_accounts
         import config
+        from cache import add_account, get_accounts
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             new_account = {"id": "999", "name": "New Account"}
             add_account("youtube", new_account)
 
@@ -311,14 +314,14 @@ class TestAccountManagement:
 
     def test_add_account_multiple(self, temp_dir):
         """Test adding multiple accounts."""
-        from cache import add_account, get_accounts
         import config
+        from cache import add_account, get_accounts
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             add_account("twitter", {"id": "1", "name": "Account 1"})
             add_account("twitter", {"id": "2", "name": "Account 2"})
 
@@ -328,14 +331,14 @@ class TestAccountManagement:
 
     def test_remove_account(self, temp_dir):
         """Test removing account."""
-        from cache import add_account, remove_account, get_accounts
         import config
+        from cache import add_account, get_accounts, remove_account
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             # Add accounts
             add_account("youtube", {"id": "1", "name": "Account 1"})
             add_account("youtube", {"id": "2", "name": "Account 2"})
@@ -364,24 +367,24 @@ class TestProductManagement:
 
     def test_get_products_empty(self, temp_dir):
         """Test getting products when cache is empty."""
-        from cache import get_products
         import config
+        from cache import get_products
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             result = get_products()
 
         assert result == []
 
     def test_add_product(self, temp_dir):
         """Test adding product."""
-        from cache import add_product, get_products
         import config
+        from cache import add_product, get_products
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             new_product = {"id": "prod123", "name": "Test Product", "price": 99.99}
             add_product(new_product)
 
@@ -393,14 +396,14 @@ class TestProductManagement:
 
     def test_add_multiple_products(self, temp_dir):
         """Test adding multiple products."""
-        from cache import add_product, get_products
         import config
+        from cache import add_product, get_products
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
 
-        with patch.object(config, 'ROOT_DIR', str(temp_dir)):
+        with patch.object(config, "ROOT_DIR", str(temp_dir)):
             add_product({"id": "1", "name": "Product 1"})
             add_product({"id": "2", "name": "Product 2"})
             add_product({"id": "3", "name": "Product 3"})

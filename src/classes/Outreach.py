@@ -1,19 +1,21 @@
-import os
-import io
-import re
 import csv
+import io
+import logging
+import os
+import platform
+import re
+import subprocess
 import time
 import zipfile
-import yagmail
+
 import requests
-import subprocess
-import logging
-import platform
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import yagmail
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from cache import *
-from status import *
 from config import *
+from status import *
+
 
 class Outreach:
     """
@@ -25,7 +27,7 @@ class Outreach:
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((requests.RequestException, requests.Timeout)),
-        reraise=True
+        reraise=True,
     )
     def _make_http_request_with_retry(method: str, url: str, **kwargs):
         """
@@ -113,7 +115,9 @@ class Outreach:
             None
         """
         # Check if the scraper is already built, if not, build it
-        scraper_executable = "google-maps-scraper.exe" if platform.system() == "Windows" else "google-maps-scraper"
+        scraper_executable = (
+            "google-maps-scraper.exe" if platform.system() == "Windows" else "google-maps-scraper"
+        )
         if os.path.exists(scraper_executable):
             print(colored("=> Scraper already built. Skipping build.", "blue"))
             return
@@ -126,13 +130,17 @@ class Outreach:
 
             # Move the built executable to parent directory
             if platform.system() == "Windows":
-                subprocess.run(["move", "google-maps-scraper.exe", "..\\google-maps-scraper.exe"], check=True, shell=True)
+                subprocess.run(
+                    ["move", "google-maps-scraper.exe", "..\\google-maps-scraper.exe"],
+                    check=True,
+                    shell=True,
+                )
             else:
                 subprocess.run(["mv", "google-maps-scraper", "../google-maps-scraper"], check=True)
         finally:
             os.chdir(original_dir)
 
-    def run_scraper_with_args_for_30_seconds(self, args: str, timeout = 300) -> None:
+    def run_scraper_with_args_for_30_seconds(self, args: str, timeout=300) -> None:
         """
         Run the scraper with the specified arguments for 30 seconds.
 
@@ -147,15 +155,16 @@ class Outreach:
         info(" => Running scraper...")
 
         # Build command as list for secure subprocess execution
-        scraper_executable = "./google-maps-scraper.exe" if platform.system() == "Windows" else "./google-maps-scraper"
+        scraper_executable = (
+            "./google-maps-scraper.exe"
+            if platform.system() == "Windows"
+            else "./google-maps-scraper"
+        )
         command_list = [scraper_executable] + args.split()
 
         try:
             scraper_process = subprocess.run(
-                command_list,
-                timeout=float(timeout),
-                capture_output=True,
-                text=True
+                command_list, timeout=float(timeout), capture_output=True, text=True
             )
 
             if scraper_process.returncode == 0:
@@ -163,7 +172,9 @@ class Outreach:
                 print(colored("=> Scraper finished successfully.", "green"))
             else:
                 self._kill_scraper_process()
-                logging.error(f"Scraper finished with error code {scraper_process.returncode}: {scraper_process.stderr}")
+                logging.error(
+                    f"Scraper finished with error code {scraper_process.returncode}: {scraper_process.stderr}"
+                )
                 print(colored("=> Scraper finished with an error.", "red"))
 
         except subprocess.TimeoutExpired as e:
@@ -188,11 +199,15 @@ class Outreach:
         """
         try:
             if platform.system() == "Windows":
-                subprocess.run(["taskkill", "/f", "/im", "google-maps-scraper.exe"],
-                             check=False, capture_output=True)
+                subprocess.run(
+                    ["taskkill", "/f", "/im", "google-maps-scraper.exe"],
+                    check=False,
+                    capture_output=True,
+                )
             else:
-                subprocess.run(["pkill", "-f", "google-maps-scraper"],
-                             check=False, capture_output=True)
+                subprocess.run(
+                    ["pkill", "-f", "google-maps-scraper"], check=False, capture_output=True
+                )
         except Exception as e:
             logging.debug(f"Error killing scraper process: {str(e)}")
 
@@ -211,19 +226,19 @@ class Outreach:
             items = f.readlines()
             items = [item.strip() for item in items[1:]]
             return items
-        
+
     def set_email_for_website(self, index: int, website: str, output_file: str):
         """Extracts an email address from a website and updates a CSV file with it.
 
-    This method sends a GET request to the specified website, searches for the
-    first email address in the HTML content, and appends it to the specified
-    row in a CSV file. If no email address is found, no changes are made to
-    the CSV file.
+        This method sends a GET request to the specified website, searches for the
+        first email address in the HTML content, and appends it to the specified
+        row in a CSV file. If no email address is found, no changes are made to
+        the CSV file.
 
-    Args:
-        index (int): The row index in the CSV file where the email should be appended.
-        website (str): The URL of the website to extract the email address from.
-        output_file (str): The path to the CSV file to update with the extracted email."""
+        Args:
+            index (int): The row index in the CSV file where the email should be appended.
+            website (str): The URL of the website to extract the email address from.
+            output_file (str): The path to the CSV file to update with the extracted email."""
         # Extract and set an email for a website
         email = ""
 
@@ -252,7 +267,7 @@ class Outreach:
             with open(output_file, "w", newline="", errors="ignore") as csvfile:
                 csvwriter = csv.writer(csvfile)
                 csvwriter.writerows(items)
-        
+
     def start(self) -> None:
         """
         Start the outreach process.
@@ -280,7 +295,9 @@ class Outreach:
         message_body = get_outreach_message_body_file()
 
         # Run
-        self.run_scraper_with_args_for_30_seconds(f"-input niche.txt -results \"{output_path}\"", timeout=get_scraper_timeout())
+        self.run_scraper_with_args_for_30_seconds(
+            f'-input niche.txt -results "{output_path}"', timeout=get_scraper_timeout()
+        )
 
         # Get the items from the file
         items = self.get_items_from_file(output_path)
@@ -292,7 +309,12 @@ class Outreach:
         time.sleep(2)
 
         # Create a yagmail SMTP client outside the loop
-        yag = yagmail.SMTP(user=self.email_creds["username"], password=self.email_creds["password"], host=self.email_creds["smtp_server"], port=self.email_creds["smtp_port"])
+        yag = yagmail.SMTP(
+            user=self.email_creds["username"],
+            password=self.email_creds["password"],
+            host=self.email_creds["smtp_server"],
+            port=self.email_creds["smtp_port"],
+        )
 
         # Get the email for each business
         for item in items:
@@ -311,7 +333,7 @@ class Outreach:
 
                     if test_r.status_code == 200:
                         self.set_email_for_website(items.index(item), website, output_path)
-                        
+
                         # Send emails using the existing SMTP connection
                         receiver_email = item.split(",")[-1]
 
@@ -323,7 +345,7 @@ class Outreach:
                         body = open(message_body, "r").read().replace("{{COMPANY_NAME}}", item[0])
 
                         info(f" => Sending email to {receiver_email}...")
-                        
+
                         yag.send(
                             to=receiver_email,
                             subject=subject,

@@ -1,8 +1,10 @@
 """
 Unit tests for LLM Service (src/llm_service.py).
 """
+
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 
 
 class TestLLMService:
@@ -11,6 +13,7 @@ class TestLLMService:
     def teardown_method(self):
         """Reset instances after each test."""
         from llm_service import LLMService
+
         LLMService.reset_instances()
 
     def test_initialization(self):
@@ -47,14 +50,11 @@ class TestLLMService:
         """Test get_instance with custom model."""
         from llm_service import LLMService
 
-        service = LLMService.get_instance(
-            api_key="test-key",
-            default_model="mistral-small-latest"
-        )
+        service = LLMService.get_instance(api_key="test-key", default_model="mistral-small-latest")
 
         assert service.default_model == "mistral-small-latest"
 
-    @patch('llm_service.Mistral')
+    @patch("llm_service.Mistral")
     def test_client_property_lazy_initialization(self, mock_mistral_class):
         """Test that client is lazily initialized."""
         from llm_service import LLMService
@@ -74,7 +74,7 @@ class TestLLMService:
         assert client is mock_client
         mock_mistral_class.assert_called_once_with(api_key="test-key")
 
-    @patch('llm_service.Mistral')
+    @patch("llm_service.Mistral")
     def test_client_property_cached(self, mock_mistral_class):
         """Test that client is cached after first access."""
         from llm_service import LLMService
@@ -100,9 +100,10 @@ class TestChatCompletion:
     def teardown_method(self):
         """Reset instances after each test."""
         from llm_service import LLMService
+
         LLMService.reset_instances()
 
-    @patch('llm_service.Mistral')
+    @patch("llm_service.Mistral")
     def test_chat_completion_success(self, mock_mistral_class):
         """Test successful chat completion."""
         from llm_service import LLMService
@@ -120,7 +121,7 @@ class TestChatCompletion:
         service = LLMService(api_key="test-key")
         messages = [
             {"role": "system", "content": "You are helpful"},
-            {"role": "user", "content": "Hello"}
+            {"role": "user", "content": "Hello"},
         ]
 
         result = service.chat_completion(messages)
@@ -130,12 +131,10 @@ class TestChatCompletion:
 
         # Verify API was called correctly
         mock_client.chat.complete.assert_called_once_with(
-            model="mistral-medium-latest",
-            messages=messages,
-            temperature=0.7
+            model="mistral-medium-latest", messages=messages, temperature=0.7
         )
 
-    @patch('llm_service.Mistral')
+    @patch("llm_service.Mistral")
     def test_chat_completion_with_custom_model(self, mock_mistral_class):
         """Test chat completion with custom model."""
         from llm_service import LLMService
@@ -154,12 +153,10 @@ class TestChatCompletion:
         result = service.chat_completion(messages, model="mistral-large-latest")
 
         mock_client.chat.complete.assert_called_once_with(
-            model="mistral-large-latest",
-            messages=messages,
-            temperature=0.7
+            model="mistral-large-latest", messages=messages, temperature=0.7
         )
 
-    @patch('llm_service.Mistral')
+    @patch("llm_service.Mistral")
     def test_chat_completion_with_temperature(self, mock_mistral_class):
         """Test chat completion with custom temperature."""
         from llm_service import LLMService
@@ -178,12 +175,10 @@ class TestChatCompletion:
         result = service.chat_completion(messages, temperature=0.3)
 
         mock_client.chat.complete.assert_called_once_with(
-            model="mistral-medium-latest",
-            messages=messages,
-            temperature=0.3
+            model="mistral-medium-latest", messages=messages, temperature=0.3
         )
 
-    @patch('llm_service.Mistral')
+    @patch("llm_service.Mistral")
     def test_chat_completion_with_max_tokens(self, mock_mistral_class):
         """Test chat completion with max tokens."""
         from llm_service import LLMService
@@ -202,13 +197,10 @@ class TestChatCompletion:
         result = service.chat_completion(messages, max_tokens=100)
 
         mock_client.chat.complete.assert_called_once_with(
-            model="mistral-medium-latest",
-            messages=messages,
-            temperature=0.7,
-            max_tokens=100
+            model="mistral-medium-latest", messages=messages, temperature=0.7, max_tokens=100
         )
 
-    @patch('llm_service.Mistral')
+    @patch("llm_service.Mistral")
     def test_chat_completion_exception(self, mock_mistral_class):
         """Test chat completion handles exceptions."""
         from llm_service import LLMService
@@ -230,9 +222,10 @@ class TestGenerateScript:
     def teardown_method(self):
         """Reset instances after each test."""
         from llm_service import LLMService
+
         LLMService.reset_instances()
 
-    @patch('llm_service.Mistral')
+    @patch("llm_service.Mistral")
     def test_generate_script(self, mock_mistral_class):
         """Test generate_script convenience method."""
         from llm_service import LLMService
@@ -248,8 +241,7 @@ class TestGenerateScript:
         service = LLMService(api_key="test-key")
 
         result = service.generate_script(
-            system_prompt="You are a script writer",
-            user_prompt="Write a script about AI"
+            system_prompt="You are a script writer", user_prompt="Write a script about AI"
         )
 
         assert result == "Generated script content"
@@ -264,7 +256,7 @@ class TestGenerateScript:
         assert messages[1]["role"] == "user"
         assert messages[1]["content"] == "Write a script about AI"
 
-    @patch('llm_service.Mistral')
+    @patch("llm_service.Mistral")
     def test_generate_script_with_custom_model(self, mock_mistral_class):
         """Test generate_script with custom model."""
         from llm_service import LLMService
@@ -280,9 +272,7 @@ class TestGenerateScript:
         service = LLMService(api_key="test-key")
 
         result = service.generate_script(
-            system_prompt="System",
-            user_prompt="User",
-            model="mistral-large-latest"
+            system_prompt="System", user_prompt="User", model="mistral-large-latest"
         )
 
         call_args = mock_client.chat.complete.call_args
@@ -318,6 +308,7 @@ class TestConvenienceFunction:
     def teardown_method(self):
         """Reset instances after each test."""
         from llm_service import LLMService
+
         LLMService.reset_instances()
 
     def test_create_llm_service(self):
@@ -333,10 +324,7 @@ class TestConvenienceFunction:
         """Test create_llm_service with custom model."""
         from llm_service import create_llm_service
 
-        service = create_llm_service(
-            api_key="test-key",
-            model="mistral-small-latest"
-        )
+        service = create_llm_service(api_key="test-key", model="mistral-small-latest")
 
         assert service.default_model == "mistral-small-latest"
 
