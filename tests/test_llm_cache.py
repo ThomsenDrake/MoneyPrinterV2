@@ -310,4 +310,4 @@ class TestLLMCacheErrorHandling:
             with pytest.raises(CacheError) as exc_info:
                 cache.set("Test prompt", "Test response")
 
-            assert "Failed to cache" in str(exc_info.value)
+        assert "Failed to cache" in str(exc_info.value)

@@ -76,7 +76,9 @@ class TestConfigProviderProtocol:
     def test_config_provider_protocol_with_mock(self):
         """Test that a mock object satisfies ConfigProviderProtocol."""
         mock_config = Mock(spec=ConfigProviderProtocol)
-        mock_config.get = Mock(side_effect=lambda k, d=None: {"api_key": "test123"}.get(k, d))
+        mock_config.get = Mock(
+            side_effect=lambda k, default=None: {"api_key": "test123"}.get(k, default)
+        )
         mock_config.get_all = Mock(return_value={"api_key": "test123", "timeout": 30})
 
         # Test get with default

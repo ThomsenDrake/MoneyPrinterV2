@@ -8,7 +8,11 @@ interface for Selenium operations.
 from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    TimeoutException,
+    WebDriverException,
+)
 from selenium.webdriver.common.by import By
 
 from src.exceptions import BrowserOperationError, ElementNotFoundError
@@ -51,7 +55,7 @@ class TestSeleniumServiceNavigation:
     def test_navigate_to_failure(self):
         """Test navigation failure raises BrowserOperationError."""
         mock_driver = Mock()
-        mock_driver.get.side_effect = Exception("Network error")
+        mock_driver.get.side_effect = WebDriverException("Network error")
         service = SeleniumService(mock_driver)
 
         with pytest.raises(BrowserOperationError) as exc_info:
@@ -280,7 +284,7 @@ class TestSeleniumServiceUtilities:
     def test_element_exists_false(self, mock_wait):
         """Test element_exists returns False when element doesn't exist."""
         mock_driver = Mock()
-        mock_wait.side_effect = AppTimeoutError("Not found")
+        mock_wait.side_effect = ElementNotFoundError("Not found")
 
         service = SeleniumService(mock_driver)
         exists = service.element_exists(By.ID, "missing-element")
