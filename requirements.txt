@@ -29,6 +29,7 @@ requests==2.31.0
 srt_equalizer==0.1.10
 platformdirs==4.4.0
 tenacity==9.1.2  # Retry logic for network operations
+python-dotenv==1.0.0  # Environment variable management for secrets
 
 # Development/Testing dependencies
 pytest==7.4.3

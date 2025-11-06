@@ -6,6 +6,14 @@ from typing import Any, Dict, Optional
 
 from termcolor import colored
 
+# Try to load dotenv for environment variable support
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()  # Load .env file if it exists
+except ImportError:
+    pass  # dotenv is optional
+
 ROOT_DIR = os.path.dirname(sys.path[0])
 
 
@@ -121,6 +129,37 @@ class ConfigManager:
         instance = cls()
         return instance._config.get(key, default)
 
+    @classmethod
+    def get_with_env(cls, key: str, env_var: str, default: Any = None) -> Any:
+        """
+        Get a configuration value with environment variable priority.
+
+        Order of precedence:
+        1. Environment variable (if set and not empty)
+        2. config.json value (if key exists)
+        3. Default value
+
+        Args:
+            key: The configuration key in config.json
+            env_var: The environment variable name to check first
+            default: Default value if neither env var nor config key found
+
+        Returns:
+            The configuration value from env, config, or default
+
+        Example:
+            >>> ConfigManager.get_with_env("mistral_api_key", "MISTRAL_API_KEY", "")
+            # Returns MISTRAL_API_KEY env var if set, else config.json value, else ""
+        """
+        # Check environment variable first
+        env_value = os.getenv(env_var)
+        if env_value is not None and env_value.strip() != "":
+            return env_value
+
+        # Fall back to config.json
+        instance = cls()
+        return instance._config.get(key, default)
+
 
 # Global config manager instance
 _config = ConfigManager()
@@ -152,21 +191,53 @@ def get_first_time_running() -> bool:
 
 def get_email_credentials() -> dict:
     """
-    Gets the email credentials from the config file.
+    Gets the email credentials from environment variables or config file.
+
+    Checks SMTP_USERNAME and SMTP_PASSWORD environment variables first,
+    then falls back to config.json email object.
 
     Returns:
-        credentials (dict): The email credentials
+        credentials (dict): The email credentials with keys:
+            - username: Email username (from SMTP_USERNAME or config)
+            - password: Email password (from SMTP_PASSWORD or config)
+            - smtp_server: SMTP server (from SMTP_SERVER or config)
+            - smtp_port: SMTP port (from SMTP_PORT or config)
     """
-    return _config.get("email", {})
+    # Get base email config from config.json
+    email_config = _config.get("email", {})
+
+    # Override with environment variables if present
+    username = os.getenv("SMTP_USERNAME")
+    password = os.getenv("SMTP_PASSWORD")
+    smtp_server = os.getenv("SMTP_SERVER")
+    smtp_port = os.getenv("SMTP_PORT")
+
+    # Build result with env vars taking precedence
+    result = {
+        "smtp_server": (
+            smtp_server if smtp_server else email_config.get("smtp_server", "smtp.gmail.com")
+        ),
+        "smtp_port": int(smtp_port) if smtp_port else email_config.get("smtp_port", 587),
+        "username": username if username else email_config.get("username", ""),
+        "password": password if password else email_config.get("password", ""),
+    }
+
+    return result
 
 
 def get_verbose() -> bool:
     """
-    Gets the verbose flag from the config file.
+    Gets the verbose flag from environment or config file.
+
+    Checks VERBOSE environment variable first,
+    then falls back to config.json.
 
     Returns:
         verbose (bool): The verbose flag
     """
+    verbose_env = os.getenv("VERBOSE")
+    if verbose_env is not None:
+        return verbose_env.lower() in ("true", "1", "yes")
     return _config.get("verbose", False)
 
 
@@ -174,19 +245,28 @@ def get_firefox_profile_path() -> str:
     """
     Gets the path to the Firefox profile.
 
+    Checks FIREFOX_PROFILE environment variable first,
+    then falls back to config.json.
+
     Returns:
         path (str): The path to the Firefox profile
     """
-    return _config.get("firefox_profile", "")
+    return _config.get_with_env("firefox_profile", "FIREFOX_PROFILE", "")
 
 
 def get_headless() -> bool:
     """
-    Gets the headless flag from the config file.
+    Gets the headless flag from environment or config file.
+
+    Checks HEADLESS environment variable first,
+    then falls back to config.json.
 
     Returns:
         headless (bool): The headless flag
     """
+    headless_env = os.getenv("HEADLESS")
+    if headless_env is not None:
+        return headless_env.lower() in ("true", "1", "yes")
     return _config.get("headless", False)
 
 
@@ -316,30 +396,39 @@ def get_assemblyai_api_key() -> str:
     """
     Gets the AssemblyAI API key.
 
+    Checks ASSEMBLYAI_API_KEY environment variable first,
+    then falls back to config.json.
+
     Returns:
         key (str): The AssemblyAI API key
     """
-    return _config.get("assembly_ai_api_key", "")
+    return _config.get_with_env("assembly_ai_api_key", "ASSEMBLYAI_API_KEY", "")
 
 
 def get_mistral_api_key() -> str:
     """
     Gets the Mistral AI API key.
 
+    Checks MISTRAL_API_KEY environment variable first,
+    then falls back to config.json.
+
     Returns:
         key (str): The Mistral AI API key
     """
-    return _config.get("mistral_api_key", "")
+    return _config.get_with_env("mistral_api_key", "MISTRAL_API_KEY", "")
 
 
 def get_venice_api_key() -> str:
     """
     Gets the Venice AI API key.
 
+    Checks VENICE_API_KEY environment variable first,
+    then falls back to config.json.
+
     Returns:
         key (str): The Venice AI API key
     """
-    return _config.get("venice_api_key", "")
+    return _config.get_with_env("venice_api_key", "VENICE_API_KEY", "")
 
 
 def equalize_subtitles(srt_path: str, max_chars: int = 10) -> None:
@@ -362,10 +451,27 @@ def get_font() -> str:
     """
     Gets the font from the config file.
 
+    Returns validated font filename (basename only for security).
+
     Returns:
-        font (str): The font
+        font (str): The font filename (basename only)
     """
-    return _config.get("font", "")
+    import os.path
+
+    font = _config.get("font", "")
+    if not font:
+        return ""
+
+    # Security: Only allow basename, prevent directory traversal
+    # E.g., "../../../etc/passwd" becomes just "passwd"
+    safe_font = os.path.basename(font)
+
+    # Additional validation: Must have valid font extension
+    valid_extensions = (".ttf", ".otf", ".ttc", ".woff", ".woff2")
+    if not safe_font.lower().endswith(valid_extensions):
+        logging.warning(f"Font file has invalid extension: {safe_font}")
+
+    return safe_font
 
 
 def get_fonts_dir() -> str:
@@ -380,12 +486,44 @@ def get_fonts_dir() -> str:
 
 def get_imagemagick_path() -> str:
     """
-    Gets the path to ImageMagick.
+    Gets the validated path to ImageMagick binary.
+
+    Performs security validation to prevent command injection.
 
     Returns:
-        path (str): The path to ImageMagick
+        path (str): The validated path to ImageMagick
+
+    Raises:
+        ValueError: If path contains suspicious characters
     """
-    return _config.get("imagemagick_path", "")
+    import os.path
+    import re
+
+    path = _config.get("imagemagick_path", "")
+    if not path:
+        return ""
+
+    # Security: Check for suspicious characters that could enable command injection
+    # Allow only: alphanumeric, /, \, -, _, ., space, :
+    if not re.match(r"^[a-zA-Z0-9/\\\-_.:\s]+$", path):
+        raise ValueError(
+            f"ImageMagick path contains invalid characters: {path}. "
+            "Only alphanumeric, /, \\, -, _, ., :, and spaces are allowed."
+        )
+
+    # Additional security: Block command chaining attempts
+    dangerous_sequences = [";", "&&", "||", "`", "$", "$(", "|", "<", ">"]
+    for seq in dangerous_sequences:
+        if seq in path:
+            raise ValueError(f"ImageMagick path contains dangerous sequence '{seq}': {path}")
+
+    # Validate path exists (log warning if not, but don't fail)
+    if not os.path.exists(path):
+        logging.warning(
+            f"ImageMagick path does not exist: {path}. " "Video subtitle generation may fail."
+        )
+
+    return path
 
 
 def get_script_sentence_length() -> int:
