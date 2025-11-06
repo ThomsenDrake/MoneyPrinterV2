@@ -145,6 +145,12 @@ class FileLockError(FileOperationError):
     pass
 
 
+class CacheError(FileOperationError):
+    """Raised when cache operations fail."""
+
+    pass
+
+
 # Browser/Selenium Errors
 class BrowserError(MoneyPrinterError):
     """Base class for browser automation errors."""
