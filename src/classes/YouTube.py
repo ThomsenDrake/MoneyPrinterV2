@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Any, List, Optional
 from uuid import uuid4
@@ -481,6 +482,84 @@ class YouTube:
                 return None
             return self.generate_image_cloudflare(prompt, worker_url)
 
+    def generate_images_parallel(self, prompts: List[str], max_workers: int = None) -> List[str]:
+        """
+        Generates AI Images in parallel using ThreadPoolExecutor.
+
+        This method parallelizes image generation to significantly improve performance
+        when generating multiple images. Instead of generating images sequentially,
+        it generates them concurrently using a thread pool.
+
+        Args:
+            prompts: List of image prompts to generate
+            max_workers: Maximum number of concurrent threads (defaults to config threads setting)
+
+        Returns:
+            List of paths to generated images (in same order as prompts)
+
+        Example:
+            >>> prompts = ["sunset", "mountain", "ocean"]
+            >>> image_paths = self.generate_images_parallel(prompts)
+            >>> # Images generated concurrently instead of sequentially
+        """
+        if max_workers is None:
+            max_workers = get_threads()
+
+        print(
+            colored(
+                f"[+] Generating {len(prompts)} images in parallel (max {max_workers} workers)...",
+                "blue",
+            )
+        )
+
+        # Track results with their original index to maintain order
+        results = [None] * len(prompts)
+        failed_indices = []
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all tasks
+            future_to_index = {
+                executor.submit(self.generate_image, prompt): idx
+                for idx, prompt in enumerate(prompts)
+            }
+
+            # Process completed futures
+            for future in as_completed(future_to_index):
+                idx = future_to_index[future]
+                try:
+                    image_path = future.result()
+                    if image_path:
+                        results[idx] = image_path
+                        if get_verbose():
+                            success(
+                                f" => Image {idx + 1}/{len(prompts)} generated: {prompts[idx][:50]}..."
+                            )
+                    else:
+                        logging.warning(
+                            f"Image generation returned None for prompt {idx}: {prompts[idx][:50]}..."
+                        )
+                        failed_indices.append(idx)
+                except Exception as e:
+                    logging.error(
+                        f"Image generation failed for prompt {idx}: {str(e)}", exc_info=True
+                    )
+                    error(f"Failed to generate image {idx + 1}: {str(e)}")
+                    failed_indices.append(idx)
+
+        # Report results
+        successful = len(prompts) - len(failed_indices)
+        if failed_indices:
+            warning(
+                f"{len(failed_indices)} image(s) failed to generate (indices: {failed_indices})"
+            )
+
+        success(f"Generated {successful}/{len(prompts)} images successfully")
+
+        # Filter out None values (failed generations)
+        valid_images = [path for path in results if path is not None]
+
+        return valid_images
+
     def generate_script_to_speech(self, tts_instance: TTS) -> str:
         """
         Converts the generated script into Speech using CoquiTTS and returns the path to the wav file.
@@ -673,9 +752,13 @@ class YouTube:
         # Generate the Image Prompts
         self.generate_prompts()
 
-        # Generate the Images
-        for prompt in self.image_prompts:
-            self.generate_image(prompt)
+        # Generate the Images in parallel (significantly faster than sequential)
+        image_paths = self.generate_images_parallel(self.image_prompts)
+
+        # Note: If some images failed, we continue with the ones that succeeded
+        if not image_paths:
+            error("All image generations failed. Cannot create video.")
+            return None
 
         # Generate the TTS
         self.generate_script_to_speech(tts_instance)
