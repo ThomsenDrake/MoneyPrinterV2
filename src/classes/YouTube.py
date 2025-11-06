@@ -3,7 +3,7 @@ import logging
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 import assemblyai as aai
@@ -192,12 +192,12 @@ class YouTube:
 
         return completion
 
-    def generate_script(self) -> str:
+    def generate_script(self) -> Optional[str]:
         """
         Generate a script for a video, depending on the subject of the video, the number of paragraphs, and the AI model.
 
         Returns:
-            script (str): The script of the video.
+            Optional[str]: The script of the video, or None if generation fails.
         """
         sentence_length = get_script_sentence_length()
         prompt = f"""
@@ -349,7 +349,7 @@ class YouTube:
 
         return image_prompts
 
-    def generate_image_venice(self, prompt: str) -> str:
+    def generate_image_venice(self, prompt: str) -> Optional[str]:
         """
         Generates an AI Image using Venice AI with qwen-image.
 
@@ -357,7 +357,7 @@ class YouTube:
             prompt (str): Reference for image generation
 
         Returns:
-            path (str): The path to the generated image.
+            Optional[str]: The path to the generated image, or None if generation fails.
         """
         print(f"Generating Image using Venice AI: {prompt}")
 
@@ -414,7 +414,7 @@ class YouTube:
                 warning(f"Failed to generate image using Venice AI: {str(e)}")
             return None
 
-    def generate_image_cloudflare(self, prompt: str, worker_url: str) -> str:
+    def generate_image_cloudflare(self, prompt: str, worker_url: str) -> Optional[str]:
         """
         Generates an AI Image using Cloudflare worker.
 
@@ -423,7 +423,7 @@ class YouTube:
             worker_url (str): The Cloudflare worker URL
 
         Returns:
-            path (str): The path to the generated image.
+            Optional[str]: The path to the generated image, or None if generation fails.
         """
         print(f"Generating Image using Cloudflare: {prompt}")
 
@@ -452,7 +452,7 @@ class YouTube:
                 warning("Failed to generate image. The response was not a PNG image.")
             return None
 
-    def generate_image(self, prompt: str) -> str:
+    def generate_image(self, prompt: str) -> Optional[str]:
         """
         Generates an AI Image based on the given prompt.
 
@@ -460,7 +460,7 @@ class YouTube:
             prompt (str): Reference for image generation
 
         Returns:
-            path (str): The path to the generated image.
+            Optional[str]: The path to the generated image, or None if generation fails.
         """
         # Get account config from cache
         cached_accounts = get_accounts("youtube")
@@ -485,7 +485,7 @@ class YouTube:
                 return None
             return self.generate_image_cloudflare(prompt, worker_url)
 
-    def generate_images_parallel(self, prompts: List[str], max_workers: int = None) -> List[str]:
+    def generate_images_parallel(self, prompts: List[str], max_workers: Optional[int] = None) -> List[str]:
         """
         Generates AI Images in parallel using ThreadPoolExecutor.
 
@@ -587,12 +587,12 @@ class YouTube:
 
         return path
 
-    def add_video(self, video: dict) -> None:
+    def add_video(self, video: Dict[str, Any]) -> None:
         """
         Adds a video to the cache.
 
         Args:
-            video (dict): The video to add
+            video (Dict[str, Any]): The video to add
 
         Returns:
             None
@@ -733,7 +733,7 @@ class YouTube:
 
         return combined_image_path
 
-    def generate_video(self, tts_instance: TTS) -> str:
+    def generate_video(self, tts_instance: TTS) -> Optional[str]:
         """
         Generates a YouTube Short based on the provided niche and language.
 
@@ -741,7 +741,7 @@ class YouTube:
             tts_instance (TTS): Instance of TTS Class.
 
         Returns:
-            path (str): The path to the generated MP4 File.
+            Optional[str]: The path to the generated MP4 File, or None if generation fails.
         """
         # Generate the Topic
         self.generate_topic()
@@ -973,12 +973,12 @@ class YouTube:
                 pass
             return False
 
-    def get_videos(self) -> List[dict]:
+    def get_videos(self) -> List[Dict[str, Any]]:
         """
         Gets the uploaded videos from the YouTube Channel.
 
         Returns:
-            videos (List[dict]): The uploaded videos.
+            List[Dict[str, Any]]: The uploaded videos.
         """
         if not os.path.exists(get_youtube_cache_path()):
             # Create the cache file

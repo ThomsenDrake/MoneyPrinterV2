@@ -7,6 +7,7 @@ import re
 import subprocess
 import time
 import zipfile
+from typing import List
 
 import yagmail
 
@@ -129,7 +130,7 @@ class Outreach:
         finally:
             os.chdir(original_dir)
 
-    def run_scraper_with_args_for_30_seconds(self, args: str, timeout=300) -> None:
+    def run_scraper_with_args_for_30_seconds(self, args: str, timeout: int = 300) -> None:
         """
         Run the scraper with the specified arguments for 30 seconds.
 
@@ -200,7 +201,7 @@ class Outreach:
         except Exception as e:
             logging.debug(f"Error killing scraper process: {str(e)}")
 
-    def get_items_from_file(self, file_name: str) -> list:
+    def get_items_from_file(self, file_name: str) -> List[str]:
         """
         Read and return items from a file.
 
@@ -208,7 +209,7 @@ class Outreach:
             file_name (str): The name of the file to read from.
 
         Returns:
-            list: The items from the file.
+            List[str]: The items from the file.
         """
         # Read and return items from a file
         with open(file_name, "r", errors="ignore") as f:
@@ -216,7 +217,7 @@ class Outreach:
             items = [item.strip() for item in items[1:]]
             return items
 
-    def set_email_for_website(self, index: int, website: str, output_file: str):
+    def set_email_for_website(self, index: int, website: str, output_file: str) -> None:
         """Extracts an email address from a website and updates a CSV file with it.
 
         This method sends a GET request to the specified website, searches for the
@@ -227,7 +228,11 @@ class Outreach:
         Args:
             index (int): The row index in the CSV file where the email should be appended.
             website (str): The URL of the website to extract the email address from.
-            output_file (str): The path to the CSV file to update with the extracted email."""
+            output_file (str): The path to the CSV file to update with the extracted email.
+
+        Returns:
+            None
+        """
         # Extract and set an email for a website
         email = ""
 
