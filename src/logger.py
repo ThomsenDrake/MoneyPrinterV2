@@ -12,7 +12,12 @@ import logging
 import logging.handlers
 from pathlib import Path
 
-from constants import APP_LOG_BACKUP_COUNT, APP_LOG_MAX_BYTES, ERROR_LOG_BACKUP_COUNT, ERROR_LOG_MAX_BYTES
+from constants import (
+    APP_LOG_BACKUP_COUNT,
+    APP_LOG_MAX_BYTES,
+    ERROR_LOG_BACKUP_COUNT,
+    ERROR_LOG_MAX_BYTES,
+)
 
 # Create logs directory if it doesn't exist
 LOGS_DIR = Path(__file__).parent.parent / "logs"

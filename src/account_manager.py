@@ -99,11 +99,7 @@ class AccountManager:
         print(colored(" 1. Venice AI (qwen-image)", "cyan"))
         print(colored(" 2. Cloudflare Worker", "cyan"))
         info("=======================================", False)
-        print(
-            colored(
-                "\nRecommendation: If you're unsure, select Venice AI (Option 1)", "yellow"
-            )
-        )
+        print(colored("\nRecommendation: If you're unsure, select Venice AI (Option 1)", "yellow"))
         info("=======================================\n", False)
 
         image_gen_choice = validate_choice(
@@ -167,9 +163,7 @@ class AccountManager:
         return account_data
 
     @staticmethod
-    def display_accounts_table(
-        accounts: List[Dict[str, Any]], platform: str = "generic"
-    ) -> None:
+    def display_accounts_table(accounts: List[Dict[str, Any]], platform: str = "generic") -> None:
         """
         Display accounts in a formatted table.
 
@@ -330,7 +324,9 @@ class AccountManager:
             Selected YouTube account, or None
         """
         info("Starting YT Shorts Automater...")
-        return AccountManager.get_or_create_account("youtube", AccountManager.create_youtube_account)
+        return AccountManager.get_or_create_account(
+            "youtube", AccountManager.create_youtube_account
+        )
 
     @staticmethod
     def manage_twitter_account() -> Optional[Dict[str, Any]]:
@@ -344,7 +340,9 @@ class AccountManager:
             Selected Twitter account, or None
         """
         info("Starting Twitter Bot...")
-        return AccountManager.get_or_create_account("twitter", AccountManager.create_twitter_account)
+        return AccountManager.get_or_create_account(
+            "twitter", AccountManager.create_twitter_account
+        )
 
 
 # Backward compatibility: expose functions at module level

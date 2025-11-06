@@ -67,16 +67,25 @@ class ConfigSchema(BaseModel):
     # Media settings
     font: Optional[str] = Field(default=None, description="Path to font file for subtitles")
     imagemagick_path: Optional[str] = Field(default=None, description="Path to ImageMagick binary")
-    threads: int = Field(default=DEFAULT_THREADS, ge=1, le=32, description="Number of threads for processing")
+    threads: int = Field(
+        default=DEFAULT_THREADS, ge=1, le=32, description="Number of threads for processing"
+    )
 
     # Content settings
     script_sentence_length: int = Field(
-        default=DEFAULT_SCRIPT_SENTENCE_LENGTH, ge=1, le=20, description="Target sentence length for scripts"
+        default=DEFAULT_SCRIPT_SENTENCE_LENGTH,
+        ge=1,
+        le=20,
+        description="Target sentence length for scripts",
     )
 
     # Platform-specific
-    is_for_kids: bool = Field(default=DEFAULT_IS_FOR_KIDS, description="Content is for kids (YouTube)")
-    twitter_language: str = Field(default=DEFAULT_TWITTER_LANGUAGE, description="Twitter language code")
+    is_for_kids: bool = Field(
+        default=DEFAULT_IS_FOR_KIDS, description="Content is for kids (YouTube)"
+    )
+    twitter_language: str = Field(
+        default=DEFAULT_TWITTER_LANGUAGE, description="Twitter language code"
+    )
 
     # External resources
     zip_url: Optional[str] = Field(
@@ -92,7 +101,10 @@ class ConfigSchema(BaseModel):
 
     # Scraper settings
     scraper_timeout: int = Field(
-        default=DEFAULT_SCRAPER_TIMEOUT, ge=30, le=3600, description="Timeout for scraper operations (seconds)"
+        default=DEFAULT_SCRAPER_TIMEOUT,
+        ge=30,
+        le=3600,
+        description="Timeout for scraper operations (seconds)",
     )
 
     # Outreach settings

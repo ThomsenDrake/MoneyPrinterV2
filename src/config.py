@@ -232,7 +232,9 @@ def get_email_credentials() -> dict:
         "smtp_server": (
             smtp_server if smtp_server else email_config.get("smtp_server", DEFAULT_SMTP_SERVER)
         ),
-        "smtp_port": int(smtp_port) if smtp_port else email_config.get("smtp_port", DEFAULT_SMTP_PORT),
+        "smtp_port": (
+            int(smtp_port) if smtp_port else email_config.get("smtp_port", DEFAULT_SMTP_PORT)
+        ),
         "username": username if username else email_config.get("username", ""),
         "password": password if password else email_config.get("password", ""),
     }
