@@ -15,7 +15,7 @@ undetected_chromedriver==3.5.5
 
 # AI/ML APIs
 mistralai==1.0.1
-assemblyai==0.33.0
+assemblyai==0.45.5
 
 # Media processing
 moviepy==1.0.3
