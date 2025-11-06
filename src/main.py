@@ -1,9 +1,9 @@
 from typing import Any, Dict, Optional
-from uuid import uuid4
 
 from prettytable import PrettyTable
 from termcolor import colored
 
+from account_manager import AccountManager
 from art import *
 from cache import *
 from classes.AFM import AffiliateMarketing
@@ -45,85 +45,6 @@ def get_user_choice(options: list) -> int:
 
     user_input = input("Select an option: ").strip()
     return validate_integer(user_input, min_value=1, max_value=len(options), field_name="Option")
-
-
-def create_youtube_account() -> Optional[Dict[str, Any]]:
-    """
-    Create a new YouTube account configuration.
-
-    Returns:
-        Optional[Dict[str, Any]]: Account data dictionary, or None if cancelled
-    """
-    generated_uuid = str(uuid4())
-
-    success(f" => Generated ID: {generated_uuid}")
-    nickname = validate_non_empty_string(
-        question(" => Enter a nickname for this account: "), "Nickname"
-    )
-    fp_profile = validate_non_empty_string(
-        question(" => Enter the path to the Firefox profile: "), "Firefox profile path"
-    )
-    niche = validate_non_empty_string(question(" => Enter the account niche: "), "Niche")
-    language = validate_non_empty_string(question(" => Enter the account language: "), "Language")
-
-    # Add image generation options
-    info("\n============ IMAGE GENERATION ============", False)
-    print(colored(" 1. Venice AI (qwen-image)", "cyan"))
-    print(colored(" 2. Cloudflare Worker", "cyan"))
-    info("=======================================", False)
-    print(colored("\nRecommendation: If you're unsure, select Venice AI (Option 1)", "yellow"))
-    info("=======================================\n", False)
-
-    image_gen_choice = validate_choice(
-        question(" => Select image generation method (1/2): "),
-        valid_choices=["1", "2"],
-        field_name="Image generation method",
-    )
-
-    account_data = {
-        "id": generated_uuid,
-        "nickname": nickname,
-        "firefox_profile": fp_profile,
-        "niche": niche,
-        "language": language,
-        "use_g4f": image_gen_choice == "1",
-        "videos": [],
-    }
-
-    if image_gen_choice == "2":
-        worker_url = validate_non_empty_string(
-            question(" => Enter your Cloudflare worker URL for image generation: "), "Worker URL"
-        )
-        account_data["worker_url"] = worker_url
-
-    return account_data
-
-
-def create_twitter_account() -> Optional[Dict[str, Any]]:
-    """
-    Create a new Twitter account configuration.
-
-    Returns:
-        Optional[Dict[str, Any]]: Account data dictionary, or None if cancelled
-    """
-    generated_uuid = str(uuid4())
-
-    success(f" => Generated ID: {generated_uuid}")
-    nickname = validate_non_empty_string(
-        question(" => Enter a nickname for this account: "), "Nickname"
-    )
-    fp_profile = validate_non_empty_string(
-        question(" => Enter the path to the Firefox profile: "), "Firefox profile path"
-    )
-    topic = validate_non_empty_string(question(" => Enter the account topic: "), "Topic")
-
-    return {
-        "id": generated_uuid,
-        "nickname": nickname,
-        "firefox_profile": fp_profile,
-        "topic": topic,
-        "posts": [],
-    }
 
 
 def run_youtube_operations(selected_account: Dict[str, Any]) -> None:
@@ -278,106 +199,14 @@ def main():
     # Start the selected option
     if user_input == 1:
         # YouTube Shorts Automater
-        info("Starting YT Shorts Automater...")
-        cached_accounts = get_accounts("youtube")
-
-        if len(cached_accounts) == 0:
-            # No accounts found - create new one
-            warning("No accounts found in cache. Create one now?")
-            create_choice = validate_choice(
-                question("Yes/No: "),
-                valid_choices=["yes", "no"],
-                case_sensitive=False,
-                field_name="Create account",
-            )
-
-            if create_choice.lower() == "yes":
-                try:
-                    account_data = create_youtube_account()
-                    add_account("youtube", account_data)
-                    success("Account configured successfully!")
-                except ValueError as e:
-                    error(f"Failed to create account: {e}")
-                    return
-        else:
-            # Display existing accounts
-            table = PrettyTable()
-            table.field_names = ["ID", "UUID", "Nickname", "Niche"]
-            for account in cached_accounts:
-                table.add_row(
-                    [
-                        cached_accounts.index(account) + 1,
-                        colored(account["id"], "cyan"),
-                        colored(account["nickname"], "blue"),
-                        colored(account["niche"], "green"),
-                    ]
-                )
-            print(table)
-
-            # Select account
-            try:
-                account_choice = validate_integer(
-                    question("Select an account to start: "),
-                    min_value=1,
-                    max_value=len(cached_accounts),
-                    field_name="Account selection",
-                )
-                selected_account = cached_accounts[account_choice - 1]
-                run_youtube_operations(selected_account)
-            except (ValueError, IndexError) as e:
-                error(f"Invalid account selected: {e}")
-                return
+        selected_account = AccountManager.manage_youtube_account()
+        if selected_account:
+            run_youtube_operations(selected_account)
     elif user_input == 2:
         # Twitter Bot
-        info("Starting Twitter Bot...")
-        cached_accounts = get_accounts("twitter")
-
-        if len(cached_accounts) == 0:
-            # No accounts found - create new one
-            warning("No accounts found in cache. Create one now?")
-            create_choice = validate_choice(
-                question("Yes/No: "),
-                valid_choices=["yes", "no"],
-                case_sensitive=False,
-                field_name="Create account",
-            )
-
-            if create_choice.lower() == "yes":
-                try:
-                    account_data = create_twitter_account()
-                    add_account("twitter", account_data)
-                    success("Account configured successfully!")
-                except ValueError as e:
-                    error(f"Failed to create account: {e}")
-                    return
-        else:
-            # Display existing accounts
-            table = PrettyTable()
-            table.field_names = ["ID", "UUID", "Nickname", "Account Topic"]
-            for account in cached_accounts:
-                table.add_row(
-                    [
-                        cached_accounts.index(account) + 1,
-                        colored(account["id"], "cyan"),
-                        colored(account["nickname"], "blue"),
-                        colored(account["topic"], "green"),
-                    ]
-                )
-            print(table)
-
-            # Select account
-            try:
-                account_choice = validate_integer(
-                    question("Select an account to start: "),
-                    min_value=1,
-                    max_value=len(cached_accounts),
-                    field_name="Account selection",
-                )
-                selected_account = cached_accounts[account_choice - 1]
-                run_twitter_operations(selected_account)
-            except (ValueError, IndexError) as e:
-                error(f"Invalid account selected: {e}")
-                return
+        selected_account = AccountManager.manage_twitter_account()
+        if selected_account:
+            run_twitter_operations(selected_account)
     elif user_input == 3:
         # Affiliate Marketing
         info("Starting Affiliate Marketing...")
