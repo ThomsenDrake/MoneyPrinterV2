@@ -2,20 +2,20 @@
 # Updated: 2025-11-05
 
 wheel==0.42.0
-termcolor==2.4.0
-schedule==1.2.1
+termcolor==3.1.0
+schedule==1.2.2
 TTS==0.22.0
-prettytable==3.9.0
+prettytable==3.16.0
 
 # Web automation
-webdriver_manager==4.0.1
+webdriver_manager==4.0.2
 selenium_firefox==2.0.1
 selenium==4.16.0
 undetected_chromedriver==3.5.5
 
 # AI/ML APIs
 mistralai==1.0.1
-assemblyai==0.33.0
+assemblyai==0.45.5
 
 # Media processing
 moviepy==1.0.3
@@ -26,9 +26,9 @@ yagmail==0.15.293
 requests==2.31.0
 
 # Utilities
-srt_equalizer==0.1.8
-platformdirs==4.1.0
-tenacity==8.2.3  # Retry logic for network operations
+srt_equalizer==0.1.10
+platformdirs==4.4.0
+tenacity==9.1.2  # Retry logic for network operations
 python-dotenv==1.0.0  # Environment variable management for secrets
 
 # Development/Testing dependencies
