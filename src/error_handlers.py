@@ -26,9 +26,9 @@ Usage:
 import functools
 import logging
 import time
-from typing import Any, Callable, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Optional, Tuple, Type, TypeVar
 
-from exceptions import MoneyPrinterError, log_exception
+from exceptions import log_exception
 
 # Type variable for generic functions
 T = TypeVar("T")
