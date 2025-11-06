@@ -14,6 +14,21 @@ try:
 except ImportError:
     pass  # dotenv is optional
 
+# Import centralized default values
+from constants import (
+    DEFAULT_HEADLESS,
+    DEFAULT_IS_FOR_KIDS,
+    DEFAULT_SCRAPER_TIMEOUT,
+    DEFAULT_SCRIPT_SENTENCE_LENGTH,
+    DEFAULT_SMTP_PORT,
+    DEFAULT_SMTP_SERVER,
+    DEFAULT_THREADS,
+    DEFAULT_TWITTER_LANGUAGE,
+    DEFAULT_VERBOSE,
+    DEFAULT_ZIP_URL,
+    VALID_FONT_EXTENSIONS,
+)
+
 ROOT_DIR = os.path.dirname(sys.path[0])
 
 
@@ -215,9 +230,9 @@ def get_email_credentials() -> dict:
     # Build result with env vars taking precedence
     result = {
         "smtp_server": (
-            smtp_server if smtp_server else email_config.get("smtp_server", "smtp.gmail.com")
+            smtp_server if smtp_server else email_config.get("smtp_server", DEFAULT_SMTP_SERVER)
         ),
-        "smtp_port": int(smtp_port) if smtp_port else email_config.get("smtp_port", 587),
+        "smtp_port": int(smtp_port) if smtp_port else email_config.get("smtp_port", DEFAULT_SMTP_PORT),
         "username": username if username else email_config.get("username", ""),
         "password": password if password else email_config.get("password", ""),
     }
@@ -238,7 +253,7 @@ def get_verbose() -> bool:
     verbose_env = os.getenv("VERBOSE")
     if verbose_env is not None:
         return verbose_env.lower() in ("true", "1", "yes")
-    return _config.get("verbose", False)
+    return _config.get("verbose", DEFAULT_VERBOSE)
 
 
 def get_firefox_profile_path() -> str:
@@ -267,7 +282,7 @@ def get_headless() -> bool:
     headless_env = os.getenv("HEADLESS")
     if headless_env is not None:
         return headless_env.lower() in ("true", "1", "yes")
-    return _config.get("headless", False)
+    return _config.get("headless", DEFAULT_HEADLESS)
 
 
 def get_model() -> str:
@@ -287,7 +302,7 @@ def get_twitter_language() -> str:
     Returns:
         language (str): The Twitter language
     """
-    return _config.get("twitter_language", "en")
+    return _config.get("twitter_language", DEFAULT_TWITTER_LANGUAGE)
 
 
 def get_image_model() -> str:
@@ -307,7 +322,7 @@ def get_threads() -> int:
     Returns:
         threads (int): Amount of threads
     """
-    return _config.get("threads", 1)
+    return _config.get("threads", DEFAULT_THREADS)
 
 
 def get_image_prompt_llm() -> str:
@@ -327,9 +342,7 @@ def get_zip_url() -> str:
     Returns:
         url (str): The URL to the zip file
     """
-    return _config.get(
-        "zip_url", "https://filebin.net/bb9ewdtckolsf3sg/drive-download-20240209T180019Z-001.zip"
-    )
+    return _config.get("zip_url", DEFAULT_ZIP_URL)
 
 
 def get_is_for_kids() -> bool:
@@ -339,7 +352,7 @@ def get_is_for_kids() -> bool:
     Returns:
         is_for_kids (bool): The is for kids flag
     """
-    return _config.get("is_for_kids", False)
+    return _config.get("is_for_kids", DEFAULT_IS_FOR_KIDS)
 
 
 def get_google_maps_scraper_zip_url() -> str:
@@ -369,7 +382,7 @@ def get_scraper_timeout() -> int:
     Returns:
         timeout (int): The timeout
     """
-    return _config.get("scraper_timeout", 300)
+    return _config.get("scraper_timeout", DEFAULT_SCRAPER_TIMEOUT)
 
 
 def get_outreach_message_subject() -> str:
@@ -467,8 +480,7 @@ def get_font() -> str:
     safe_font = os.path.basename(font)
 
     # Additional validation: Must have valid font extension
-    valid_extensions = (".ttf", ".otf", ".ttc", ".woff", ".woff2")
-    if not safe_font.lower().endswith(valid_extensions):
+    if not safe_font.lower().endswith(VALID_FONT_EXTENSIONS):
         logging.warning(f"Font file has invalid extension: {safe_font}")
 
     return safe_font
@@ -529,9 +541,9 @@ def get_imagemagick_path() -> str:
 def get_script_sentence_length() -> int:
     """
     Gets the forced script's sentence length.
-    In case there is no sentence length in config, returns 4 when none
+    In case there is no sentence length in config, returns default value.
 
     Returns:
         length (int): Length of script's sentence
     """
-    return _config.get("script_sentence_length", 4)
+    return _config.get("script_sentence_length", DEFAULT_SCRIPT_SENTENCE_LENGTH)

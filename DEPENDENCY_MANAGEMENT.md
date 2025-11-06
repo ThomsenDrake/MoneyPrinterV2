@@ -17,7 +17,16 @@ requirements.in          # Direct production dependencies
 requirements.txt         # Locked production dependencies (generated)
 requirements-dev.in      # Direct development dependencies
 requirements-dev.txt     # Locked development dependencies (generated)
+requirements-test.txt    # Testing dependencies for CI/CD (generated)
 ```
+
+### File Purposes
+
+- **requirements.txt** - Production dependencies only. Install this in production environments.
+- **requirements-dev.txt** - All development tools (testing, linting, formatting, security). Install this for local development.
+- **requirements-test.txt** - Minimal set for CI/CD pipelines (production + testing + quality tools).
+- **requirements.in** - Human-maintained list of direct production dependencies.
+- **requirements-dev.in** - Human-maintained list of direct development dependencies.
 
 ## Setup
 
@@ -29,14 +38,19 @@ pip install pip-tools
 
 ### Install Dependencies
 
-**Production only:**
+**Production environment:**
 ```bash
 pip install -r requirements.txt
 ```
 
-**Development (includes production):**
+**Local development (recommended):**
 ```bash
 pip install -r requirements-dev.txt
+```
+
+**CI/CD pipelines:**
+```bash
+pip install -r requirements-test.txt
 ```
 
 ## Adding New Dependencies

@@ -17,6 +17,8 @@ from requests.adapters import HTTPAdapter
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from urllib3.util.retry import Retry as URLRetry
 
+from constants import DEFAULT_POOL_CONNECTIONS, DEFAULT_POOL_MAXSIZE
+
 
 class HTTPClient:
     """
@@ -61,8 +63,8 @@ class HTTPClient:
         # Mount adapter with retry strategy for both HTTP and HTTPS
         adapter = HTTPAdapter(
             max_retries=retry_strategy,
-            pool_connections=10,  # Number of connection pools
-            pool_maxsize=10,  # Max connections per pool
+            pool_connections=DEFAULT_POOL_CONNECTIONS,  # Number of connection pools
+            pool_maxsize=DEFAULT_POOL_MAXSIZE,  # Max connections per pool
         )
 
         self._session.mount("http://", adapter)

@@ -12,6 +12,8 @@ import logging
 import logging.handlers
 from pathlib import Path
 
+from constants import APP_LOG_BACKUP_COUNT, APP_LOG_MAX_BYTES, ERROR_LOG_BACKUP_COUNT, ERROR_LOG_MAX_BYTES
+
 # Create logs directory if it doesn't exist
 LOGS_DIR = Path(__file__).parent.parent / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
@@ -50,12 +52,12 @@ def setup_logger(
     if logger.handlers:
         return logger
 
-    # File handler with rotation (10MB max, keep 5 backup files)
+    # File handler with rotation
     if log_to_file:
         file_handler = logging.handlers.RotatingFileHandler(
             MAIN_LOG_FILE,
-            maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=5,
+            maxBytes=APP_LOG_MAX_BYTES,
+            backupCount=APP_LOG_BACKUP_COUNT,
             encoding="utf-8",
         )
         file_handler.setLevel(logging.DEBUG)
@@ -65,8 +67,8 @@ def setup_logger(
         # Error file handler (only errors and critical)
         error_handler = logging.handlers.RotatingFileHandler(
             ERROR_LOG_FILE,
-            maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=3,
+            maxBytes=ERROR_LOG_MAX_BYTES,
+            backupCount=ERROR_LOG_BACKUP_COUNT,
             encoding="utf-8",
         )
         error_handler.setLevel(logging.ERROR)

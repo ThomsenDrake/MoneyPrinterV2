@@ -1,6 +1,10 @@
-# Core dependencies with pinned versions for reproducible builds
-# Updated: 2025-11-05
+# Production dependencies with pinned versions for reproducible builds
+# Generated from requirements.in
+# Updated: 2025-11-06
+#
+# For development dependencies, see requirements-dev.txt
 
+# Core utilities
 wheel==0.42.0
 termcolor==2.4.0
 schedule==1.2.1
@@ -31,11 +35,5 @@ platformdirs==4.1.0
 tenacity==8.2.3  # Retry logic for network operations
 python-dotenv==1.0.0  # Environment variable management for secrets
 
-# Development/Testing dependencies
-pytest==7.4.3
-pytest-cov==4.1.0
-pytest-mock==3.12.0
-black==23.12.0
-flake8==6.1.0
-mypy==1.7.1
-pydantic==2.8.2  # Configuration validation (compatible with mistralai>=2.8.2)
+# Configuration validation
+pydantic==2.8.2  # Compatible with mistralai>=2.8.2

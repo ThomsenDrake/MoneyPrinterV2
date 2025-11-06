@@ -1,0 +1,32 @@
+# Development and testing dependencies with pinned versions
+# Generated from requirements-dev.in
+# Updated: 2025-11-06
+#
+# This file includes all production dependencies plus development tools.
+# To install: pip install -r requirements-dev.txt
+
+# Include all production dependencies
+-r requirements.txt
+
+# Testing frameworks
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Code formatting and linting
+black==23.12.0
+flake8==6.1.0
+isort==5.13.0
+
+# Type checking
+mypy==1.7.1
+
+# Dependency management
+pip-tools==7.3.0
+
+# Pre-commit hooks
+pre-commit==3.5.0
+
+# Security scanning
+safety==2.3.5
+bandit==1.7.5
