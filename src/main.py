@@ -1,8 +1,6 @@
-import subprocess
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
-import schedule
 from prettytable import PrettyTable
 from termcolor import colored
 
@@ -18,6 +16,7 @@ from constants import *
 
 # Initialize logging framework
 from logger import setup_logger
+from scheduler_service import SchedulerService
 from status import *
 from utils import *
 from validation import validate_choice, validate_integer, validate_non_empty_string
@@ -127,43 +126,6 @@ def create_twitter_account() -> Optional[Dict[str, Any]]:
     }
 
 
-def setup_cron_job(command: str, schedule_option: int, platform: str) -> None:
-    """
-    Set up a scheduled CRON job for automated posting.
-
-    Args:
-        command (str): The command to execute
-        schedule_option (int): The schedule option selected by user
-        platform (str): The platform (youtube or twitter)
-    """
-
-    def job():
-        """Executes the scheduled command."""
-        subprocess.run(command, shell=False)
-
-    if platform == "youtube":
-        if schedule_option == 1:
-            schedule.every(1).day.do(job)
-            success("Set up CRON Job: Upload once per day")
-        elif schedule_option == 2:
-            schedule.every().day.at("10:00").do(job)
-            schedule.every().day.at("16:00").do(job)
-            success("Set up CRON Job: Upload twice per day (10:00, 16:00)")
-    elif platform == "twitter":
-        if schedule_option == 1:
-            schedule.every(1).day.do(job)
-            success("Set up CRON Job: Post once per day")
-        elif schedule_option == 2:
-            schedule.every().day.at("10:00").do(job)
-            schedule.every().day.at("16:00").do(job)
-            success("Set up CRON Job: Post twice per day (10:00, 16:00)")
-        elif schedule_option == 3:
-            schedule.every().day.at("08:00").do(job)
-            schedule.every().day.at("12:00").do(job)
-            schedule.every().day.at("18:00").do(job)
-            success("Set up CRON Job: Post three times per day (08:00, 12:00, 18:00)")
-
-
 def run_youtube_operations(selected_account: Dict[str, Any]) -> None:
     """
     Run YouTube automation operations for a selected account.
@@ -220,8 +182,9 @@ def run_youtube_operations(selected_account: Dict[str, Any]) -> None:
             schedule_option = get_user_choice(YOUTUBE_CRON_OPTIONS)
 
             cron_script_path = os.path.join(ROOT_DIR, "src", "cron.py")
-            command = f"python {cron_script_path} youtube {selected_account['id']}"
-            setup_cron_job(command, schedule_option, "youtube")
+            SchedulerService.setup_youtube_schedule(
+                selected_account["id"], schedule_option, cron_script_path
+            )
 
         elif user_input == 4:
             # Exit to main menu
@@ -272,8 +235,9 @@ def run_twitter_operations(selected_account: Dict[str, Any]) -> None:
             schedule_option = get_user_choice(TWITTER_CRON_OPTIONS)
 
             cron_script_path = os.path.join(ROOT_DIR, "src", "cron.py")
-            command = f"python {cron_script_path} twitter {selected_account['id']}"
-            setup_cron_job(command, schedule_option, "twitter")
+            SchedulerService.setup_twitter_schedule(
+                selected_account["id"], schedule_option, cron_script_path
+            )
 
         elif user_input == 4:
             # Exit to main menu

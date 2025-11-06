@@ -5,9 +5,8 @@ import random
 import subprocess
 import zipfile
 
-import requests
-
 from config import *
+from http_client import get_http_client
 from status import *
 
 
@@ -88,8 +87,9 @@ def fetch_songs() -> None:
             # Skip if songs are already downloaded
             return
 
-        # Download songs
-        response = requests.get(
+        # Download songs using HTTP client with connection pooling
+        http_client = get_http_client()
+        response = http_client.get(
             get_zip_url()
             or "https://filebin.net/bb9ewdtckolsf3sg/drive-download-20240209T180019Z-001.zip"
         )
@@ -107,7 +107,7 @@ def fetch_songs() -> None:
 
         success(" => Downloaded Songs to ../Songs.")
 
-    except requests.RequestException as e:
+    except Exception as e:
         logging.error(f"Network error while fetching songs: {str(e)}", exc_info=True)
         error(f"Error occurred while fetching songs: {str(e)}")
     except (OSError, zipfile.BadZipFile) as e:

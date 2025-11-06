@@ -8,12 +8,11 @@ import subprocess
 import time
 import zipfile
 
-import requests
 import yagmail
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from cache import *
 from config import *
+from http_client import get_http_client
 from status import *
 
 
@@ -22,30 +21,6 @@ class Outreach:
     Class that houses the methods to reach out to businesses.
     """
 
-    @staticmethod
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry=retry_if_exception_type((requests.RequestException, requests.Timeout)),
-        reraise=True,
-    )
-    def _make_http_request_with_retry(method: str, url: str, **kwargs):
-        """
-        Make HTTP request with automatic retry on transient failures.
-
-        Args:
-            method: HTTP method (GET, POST, etc.)
-            url: URL to request
-            **kwargs: Additional arguments for requests
-
-        Returns:
-            Response object
-        """
-        logging.info(f"Making {method} request to {url}")
-        response = requests.request(method, url, timeout=30, **kwargs)
-        response.raise_for_status()
-        return response
-
     def __init__(self) -> None:
         """
         Constructor for the Outreach class.
@@ -53,6 +28,9 @@ class Outreach:
         Returns:
             None
         """
+        # Initialize HTTP client for connection pooling
+        self.http_client = get_http_client()
+
         # Check if go is installed
         try:
             subprocess.run(["go", "version"], check=True, capture_output=True, timeout=5)
@@ -100,7 +78,7 @@ class Outreach:
             return
 
         try:
-            r = self._make_http_request_with_retry("GET", zip_link)
+            r = self.http_client.request("GET", zip_link)
             z = zipfile.ZipFile(io.BytesIO(r.content))
             z.extractall()
         except Exception as e:
@@ -243,7 +221,7 @@ class Outreach:
         email = ""
 
         try:
-            r = self._make_http_request_with_retry("GET", website)
+            r = self.http_client.request("GET", website)
         except Exception as e:
             logging.warning(f"Failed to fetch website {website}: {str(e)}")
             return
@@ -325,7 +303,7 @@ class Outreach:
                 website = website[0] if len(website) > 0 else ""
                 if website != "":
                     try:
-                        test_r = self._make_http_request_with_retry("GET", website)
+                        test_r = self.http_client.request("GET", website)
                     except Exception as e:
                         logging.warning(f"Failed to validate website {website}: {str(e)}")
                         warning(f" => Website {website} is not accessible. Skipping...")
