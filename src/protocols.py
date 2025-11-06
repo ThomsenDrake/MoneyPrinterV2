@@ -159,9 +159,7 @@ class LLMServiceProtocol(Protocol):
     between different LLM providers (Mistral, OpenAI, Claude, etc.).
     """
 
-    def generate_response(
-        self, prompt: str, model: Optional[str] = None, **kwargs
-    ) -> str:
+    def generate_response(self, prompt: str, model: Optional[str] = None, **kwargs) -> str:
         """
         Generate a response from the LLM.
 

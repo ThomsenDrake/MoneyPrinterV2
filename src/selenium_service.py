@@ -112,9 +112,7 @@ class SeleniumService:
 
         except TimeoutException as e:
             self.logger.error(f"Timeout waiting for element: {by}='{value}' ({timeout}s)")
-            raise AppTimeoutError(
-                f"Element not found within {timeout}s: {by}='{value}'"
-            ) from e
+            raise AppTimeoutError(f"Element not found within {timeout}s: {by}='{value}'") from e
         except NoSuchElementException as e:
             self.logger.error(f"Element not found: {by}='{value}'")
             raise ElementNotFoundError(f"Element not found: {by}='{value}'") from e
@@ -150,9 +148,7 @@ class SeleniumService:
 
         except TimeoutException as e:
             self.logger.error(f"Timeout waiting for elements: {by}='{value}' ({timeout}s)")
-            raise AppTimeoutError(
-                f"Elements not found within {timeout}s: {by}='{value}'"
-            ) from e
+            raise AppTimeoutError(f"Elements not found within {timeout}s: {by}='{value}'") from e
 
     def click_element(
         self, by: By, value: str, timeout: Optional[int] = None, wait_clickable: bool = True

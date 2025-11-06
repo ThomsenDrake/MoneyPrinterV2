@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from constants import ROOT_DIR
+from config import ROOT_DIR
 from exceptions import CacheError
 
 
@@ -83,9 +83,7 @@ class LLMCache:
         """
         return self.cache_dir / f"{cache_key}.json"
 
-    def get(
-        self, prompt: str, model: Optional[str] = None, **kwargs
-    ) -> Optional[str]:
+    def get(self, prompt: str, model: Optional[str] = None, **kwargs) -> Optional[str]:
         """
         Retrieve a cached LLM response.
 
@@ -301,9 +299,7 @@ class LLMCache:
 _default_cache: Optional[LLMCache] = None
 
 
-def get_llm_cache(
-    cache_dir: Optional[str] = None, default_ttl: Optional[int] = None
-) -> LLMCache:
+def get_llm_cache(cache_dir: Optional[str] = None, default_ttl: Optional[int] = None) -> LLMCache:
     """
     Get the default LLM cache instance (singleton pattern).
 

@@ -4,16 +4,12 @@ from typing import Any, Optional
 from mistralai import Mistral
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service
 from selenium_firefox import *
-from webdriver_manager.firefox import GeckoDriverManager
 
 from config import *
 from constants import *
 from status import *
 from browser_factory import BrowserFactory
-from protocols import BrowserProtocol
 
 from .Twitter import Twitter
 

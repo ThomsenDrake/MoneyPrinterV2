@@ -15,22 +15,19 @@ from moviepy.video.tools.subtitles import SubtitlesClip
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_firefox import *
 from termcolor import colored
-from webdriver_manager.firefox import GeckoDriverManager
 
 from cache import *
 from config import *
 from constants import *
-from http_client import get_http_client, HTTPClient
+from http_client import get_http_client
 from status import *
 from utils import *
 from browser_factory import BrowserFactory
-from protocols import BrowserProtocol, HTTPClientProtocol
+from protocols import HTTPClientProtocol
 
 from .Tts import TTS
 

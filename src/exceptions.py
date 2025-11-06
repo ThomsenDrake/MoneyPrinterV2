@@ -170,6 +170,19 @@ class BrowserTimeoutError(BrowserError):
     pass
 
 
+class BrowserOperationError(BrowserError):
+    """Raised when a browser operation fails."""
+
+    pass
+
+
+# Alias for application-level timeout errors (distinct from BrowserTimeoutError)
+class TimeoutError(MoneyPrinterError):
+    """Raised when an operation times out (non-browser specific)."""
+
+    pass
+
+
 # Video Processing Errors
 class VideoProcessingError(MoneyPrinterError):
     """Base class for video processing errors."""

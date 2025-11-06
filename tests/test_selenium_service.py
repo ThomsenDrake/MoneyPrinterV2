@@ -11,7 +11,11 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from src.selenium_service import SeleniumService
-from src.exceptions import BrowserOperationError, ElementNotFoundError, TimeoutError as AppTimeoutError
+from src.exceptions import (
+    BrowserOperationError,
+    ElementNotFoundError,
+    TimeoutError as AppTimeoutError,
+)
 
 
 class TestSeleniumServiceInit:
