@@ -20,14 +20,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium_firefox import *
 from termcolor import colored
 
+from browser_factory import BrowserFactory
 from cache import *
 from config import *
 from constants import *
-from http_client import get_http_client
+from http_client import HTTPClient, get_http_client
+from protocols import BrowserProtocol, HTTPClientProtocol
 from status import *
 from utils import *
-from browser_factory import BrowserFactory
-from protocols import HTTPClientProtocol
 
 from .Tts import TTS
 

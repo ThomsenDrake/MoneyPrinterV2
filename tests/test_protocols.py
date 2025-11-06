@@ -5,18 +5,19 @@ This module tests that our protocol definitions are properly structured
 and can be used for type checking and dependency injection.
 """
 
-import pytest
 from typing import Any, Dict, List, Optional
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
+import pytest
 
 from src.protocols import (
-    BrowserProtocol,
-    HTTPClientProtocol,
-    ConfigProviderProtocol,
-    LLMServiceProtocol,
-    CacheProtocol,
-    StorageProtocol,
     BrowserFactoryProtocol,
+    BrowserProtocol,
+    CacheProtocol,
+    ConfigProviderProtocol,
+    HTTPClientProtocol,
+    LLMServiceProtocol,
+    StorageProtocol,
 )
 
 

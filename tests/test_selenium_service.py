@@ -5,17 +5,15 @@ This module tests the SeleniumService class which provides a high-level
 interface for Selenium operations.
 """
 
+from unittest.mock import MagicMock, Mock, call, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch, call
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 
+from src.exceptions import BrowserOperationError, ElementNotFoundError
+from src.exceptions import TimeoutError as AppTimeoutError
 from src.selenium_service import SeleniumService
-from src.exceptions import (
-    BrowserOperationError,
-    ElementNotFoundError,
-    TimeoutError as AppTimeoutError,
-)
 
 
 class TestSeleniumServiceInit:

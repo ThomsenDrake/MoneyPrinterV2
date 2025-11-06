@@ -13,11 +13,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium_firefox import *
 from termcolor import colored
 
+from browser_factory import BrowserFactory
 from cache import *
 from config import *
 from constants import *
+from protocols import BrowserProtocol
 from status import *
-from browser_factory import BrowserFactory
 
 
 class Twitter:

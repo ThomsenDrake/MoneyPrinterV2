@@ -6,10 +6,11 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium_firefox import *
 
+from browser_factory import BrowserFactory
 from config import *
 from constants import *
+from protocols import BrowserProtocol
 from status import *
-from browser_factory import BrowserFactory
 
 from .Twitter import Twitter
 

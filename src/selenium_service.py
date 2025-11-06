@@ -20,7 +20,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from constants import DEFAULT_WAIT_TIMEOUT
-from exceptions import BrowserOperationError, ElementNotFoundError
+from exceptions import (
+    BrowserOperationError,
+    ElementNotFoundError,
+)
 from exceptions import TimeoutError as AppTimeoutError
 
 

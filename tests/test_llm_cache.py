@@ -13,8 +13,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.llm_cache import LLMCache, get_llm_cache
 from src.exceptions import CacheError
+from src.llm_cache import LLMCache, get_llm_cache
 
 
 @pytest.fixture
