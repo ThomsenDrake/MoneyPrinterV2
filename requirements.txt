@@ -5,7 +5,7 @@ wheel==0.42.0
 termcolor==3.1.0
 schedule==1.2.2
 TTS==0.22.0
-prettytable==3.9.0
+prettytable==3.16.0
 
 # Web automation
 webdriver_manager==4.0.2
