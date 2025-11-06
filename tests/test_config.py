@@ -155,15 +155,25 @@ class TestConfigGetters:
         from config import get_email_credentials
 
         result = get_email_credentials()
-        assert result == {"username": "test@example.com", "password": "test-password"}
+        assert result == {
+            "smtp_server": "smtp.gmail.com",
+            "smtp_port": 587,
+            "username": "test@example.com",
+            "password": "test-password",
+        }
 
     def test_get_email_credentials_default(self):
-        """Test get_email_credentials returns empty dict when not set."""
+        """Test get_email_credentials returns default SMTP config when not set."""
         from config import ConfigManager, get_email_credentials
 
         ConfigManager._config = {}
         result = get_email_credentials()
-        assert result == {}
+        assert result == {
+            "smtp_server": "smtp.gmail.com",
+            "smtp_port": 587,
+            "username": "",
+            "password": "",
+        }
 
     def test_get_threads_default(self):
         """Test get_threads returns default value when not set."""

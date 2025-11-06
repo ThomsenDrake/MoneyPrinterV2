@@ -214,7 +214,9 @@ def get_email_credentials() -> dict:
 
     # Build result with env vars taking precedence
     result = {
-        "smtp_server": smtp_server if smtp_server else email_config.get("smtp_server", "smtp.gmail.com"),
+        "smtp_server": (
+            smtp_server if smtp_server else email_config.get("smtp_server", "smtp.gmail.com")
+        ),
         "smtp_port": int(smtp_port) if smtp_port else email_config.get("smtp_port", 587),
         "username": username if username else email_config.get("username", ""),
         "password": password if password else email_config.get("password", ""),
@@ -503,25 +505,22 @@ def get_imagemagick_path() -> str:
 
     # Security: Check for suspicious characters that could enable command injection
     # Allow only: alphanumeric, /, \, -, _, ., space, :
-    if not re.match(r'^[a-zA-Z0-9/\\\-_.:\s]+$', path):
+    if not re.match(r"^[a-zA-Z0-9/\\\-_.:\s]+$", path):
         raise ValueError(
             f"ImageMagick path contains invalid characters: {path}. "
             "Only alphanumeric, /, \\, -, _, ., :, and spaces are allowed."
         )
 
     # Additional security: Block command chaining attempts
-    dangerous_sequences = [';', '&&', '||', '`', '$', '$(', '|', '<', '>']
+    dangerous_sequences = [";", "&&", "||", "`", "$", "$(", "|", "<", ">"]
     for seq in dangerous_sequences:
         if seq in path:
-            raise ValueError(
-                f"ImageMagick path contains dangerous sequence '{seq}': {path}"
-            )
+            raise ValueError(f"ImageMagick path contains dangerous sequence '{seq}': {path}")
 
     # Validate path exists (log warning if not, but don't fail)
     if not os.path.exists(path):
         logging.warning(
-            f"ImageMagick path does not exist: {path}. "
-            "Video subtitle generation may fail."
+            f"ImageMagick path does not exist: {path}. " "Video subtitle generation may fail."
         )
 
     return path

@@ -178,9 +178,7 @@ def rate_limit(
 
             # Log rate limiting information
             remaining = limiter.get_remaining_calls(rate_limit_key)
-            logger.debug(
-                f"API call: {rate_limit_key} | Remaining: {remaining}/{limiter.max_calls}"
-            )
+            logger.debug(f"API call: {rate_limit_key} | Remaining: {remaining}/{limiter.max_calls}")
 
             # Execute the function
             return func(*args, **kwargs)
@@ -218,8 +216,7 @@ def get_rate_limiter_for_api(api_name: str) -> RateLimiter:
     limiter = limiters.get(api_name_lower)
     if limiter is None:
         raise ValueError(
-            f"Unknown API: {api_name}. "
-            f"Supported APIs: {', '.join(limiters.keys())}"
+            f"Unknown API: {api_name}. " f"Supported APIs: {', '.join(limiters.keys())}"
         )
 
     return limiter
