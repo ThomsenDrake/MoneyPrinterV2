@@ -12,6 +12,7 @@ import yagmail
 
 from cache import *
 from config import *
+from constants import DEFAULT_GO_VERSION_CHECK_TIMEOUT
 from http_client import get_http_client
 from status import *
 
@@ -33,7 +34,12 @@ class Outreach:
 
         # Check if go is installed
         try:
-            subprocess.run(["go", "version"], check=True, capture_output=True, timeout=5)
+            subprocess.run(
+                ["go", "version"],
+                check=True,
+                capture_output=True,
+                timeout=DEFAULT_GO_VERSION_CHECK_TIMEOUT,
+            )
             self.go_installed = True
         except (subprocess.SubprocessError, FileNotFoundError):
             self.go_installed = False
@@ -53,7 +59,12 @@ class Outreach:
         """
         # Check if go is installed
         try:
-            subprocess.run(["go", "version"], check=True, capture_output=True, timeout=5)
+            subprocess.run(
+                ["go", "version"],
+                check=True,
+                capture_output=True,
+                timeout=DEFAULT_GO_VERSION_CHECK_TIMEOUT,
+            )
             return True
         except (subprocess.SubprocessError, FileNotFoundError) as e:
             logging.debug(f"Go not installed or not accessible: {str(e)}")

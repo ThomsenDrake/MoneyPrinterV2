@@ -9,6 +9,17 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from constants import (
+    DEFAULT_HEADLESS,
+    DEFAULT_IS_FOR_KIDS,
+    DEFAULT_SCRAPER_TIMEOUT,
+    DEFAULT_SCRIPT_SENTENCE_LENGTH,
+    DEFAULT_THREADS,
+    DEFAULT_TWITTER_LANGUAGE,
+    DEFAULT_VERBOSE,
+    DEFAULT_ZIP_URL,
+)
+
 
 class EmailCredentials(BaseModel):
     """Email credentials configuration."""
@@ -29,8 +40,8 @@ class ConfigSchema(BaseModel):
     """
 
     # General settings
-    verbose: bool = Field(default=False, description="Enable verbose logging")
-    headless: bool = Field(default=False, description="Run browser in headless mode")
+    verbose: bool = Field(default=DEFAULT_VERBOSE, description="Enable verbose logging")
+    headless: bool = Field(default=DEFAULT_HEADLESS, description="Run browser in headless mode")
 
     # Browser configuration
     firefox_profile: str = Field(..., min_length=1, description="Path to Firefox profile")
@@ -56,20 +67,29 @@ class ConfigSchema(BaseModel):
     # Media settings
     font: Optional[str] = Field(default=None, description="Path to font file for subtitles")
     imagemagick_path: Optional[str] = Field(default=None, description="Path to ImageMagick binary")
-    threads: int = Field(default=1, ge=1, le=32, description="Number of threads for processing")
+    threads: int = Field(
+        default=DEFAULT_THREADS, ge=1, le=32, description="Number of threads for processing"
+    )
 
     # Content settings
     script_sentence_length: int = Field(
-        default=4, ge=1, le=20, description="Target sentence length for scripts"
+        default=DEFAULT_SCRIPT_SENTENCE_LENGTH,
+        ge=1,
+        le=20,
+        description="Target sentence length for scripts",
     )
 
     # Platform-specific
-    is_for_kids: bool = Field(default=False, description="Content is for kids (YouTube)")
-    twitter_language: str = Field(default="en", description="Twitter language code")
+    is_for_kids: bool = Field(
+        default=DEFAULT_IS_FOR_KIDS, description="Content is for kids (YouTube)"
+    )
+    twitter_language: str = Field(
+        default=DEFAULT_TWITTER_LANGUAGE, description="Twitter language code"
+    )
 
     # External resources
     zip_url: Optional[str] = Field(
-        default="https://filebin.net/bb9ewdtckolsf3sg/drive-download-20240209T180019Z-001.zip",
+        default=DEFAULT_ZIP_URL,
         description="URL to download songs",
     )
     google_maps_scraper: Optional[str] = Field(
@@ -81,7 +101,10 @@ class ConfigSchema(BaseModel):
 
     # Scraper settings
     scraper_timeout: int = Field(
-        default=300, ge=30, le=3600, description="Timeout for scraper operations (seconds)"
+        default=DEFAULT_SCRAPER_TIMEOUT,
+        ge=30,
+        le=3600,
+        description="Timeout for scraper operations (seconds)",
     )
 
     # Outreach settings

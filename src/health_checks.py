@@ -13,6 +13,7 @@ from config import (
     get_mistral_api_key,
     get_venice_api_key,
 )
+from constants import DEFAULT_HTTP_TIMEOUT
 from http_client import get_http_client
 from status import error, info, success, warning
 
@@ -186,7 +187,7 @@ class HealthChecker:
             http_client = get_http_client()
 
             # Test with a reliable endpoint
-            response = http_client.get("https://www.google.com", timeout=5)
+            response = http_client.get("https://www.google.com", timeout=DEFAULT_HTTP_TIMEOUT)
 
             if response.status_code == 200:
                 return HealthCheckResult(

@@ -12,6 +12,17 @@ from functools import wraps
 from threading import Lock
 from typing import Callable, Dict, Optional
 
+from constants import (
+    ASSEMBLY_AI_MAX_CALLS,
+    ASSEMBLY_AI_PERIOD,
+    GENERIC_HTTP_MAX_CALLS,
+    GENERIC_HTTP_PERIOD,
+    MISTRAL_AI_MAX_CALLS,
+    MISTRAL_AI_PERIOD,
+    VENICE_AI_MAX_CALLS,
+    VENICE_AI_PERIOD,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -114,17 +125,17 @@ class RateLimiter:
 class APIRateLimiters:
     """Pre-configured rate limiters for common API providers."""
 
-    # Mistral AI: ~5 requests per second (conservative)
-    MISTRAL_AI = RateLimiter(max_calls=5, period=1.0)
+    # Mistral AI: Conservative requests per second
+    MISTRAL_AI = RateLimiter(max_calls=MISTRAL_AI_MAX_CALLS, period=MISTRAL_AI_PERIOD)
 
     # Venice AI: Conservative limit (adjust based on your tier)
-    VENICE_AI = RateLimiter(max_calls=10, period=1.0)
+    VENICE_AI = RateLimiter(max_calls=VENICE_AI_MAX_CALLS, period=VENICE_AI_PERIOD)
 
     # AssemblyAI: Conservative limit (adjust based on your tier)
-    ASSEMBLY_AI = RateLimiter(max_calls=5, period=1.0)
+    ASSEMBLY_AI = RateLimiter(max_calls=ASSEMBLY_AI_MAX_CALLS, period=ASSEMBLY_AI_PERIOD)
 
     # Generic HTTP: Generous limit for general HTTP requests
-    GENERIC_HTTP = RateLimiter(max_calls=100, period=60.0)
+    GENERIC_HTTP = RateLimiter(max_calls=GENERIC_HTTP_MAX_CALLS, period=GENERIC_HTTP_PERIOD)
 
 
 def rate_limit(
