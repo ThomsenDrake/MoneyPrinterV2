@@ -145,6 +145,12 @@ class FileLockError(FileOperationError):
     pass
 
 
+class CacheError(FileOperationError):
+    """Raised when cache operations fail."""
+
+    pass
+
+
 # Browser/Selenium Errors
 class BrowserError(MoneyPrinterError):
     """Base class for browser automation errors."""
@@ -166,6 +172,19 @@ class ElementNotFoundError(BrowserError):
 
 class BrowserTimeoutError(BrowserError):
     """Raised when a browser operation times out."""
+
+    pass
+
+
+class BrowserOperationError(BrowserError):
+    """Raised when a browser operation fails."""
+
+    pass
+
+
+# Alias for application-level timeout errors (distinct from BrowserTimeoutError)
+class TimeoutError(MoneyPrinterError):
+    """Raised when an operation times out (non-browser specific)."""
 
     pass
 
