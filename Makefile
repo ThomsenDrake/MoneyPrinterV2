@@ -23,11 +23,11 @@ install:
 
 # Run all tests with coverage
 test:
-	pytest tests/ --cov=src --cov-report=html --cov-report=term-missing
+	pytest tests/
 
 # Run only unit tests
 test-unit:
-	pytest tests/ -m unit --cov=src --cov-report=term-missing
+	pytest tests/ -m unit
 
 # Run linting with flake8
 lint:

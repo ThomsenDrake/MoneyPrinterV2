@@ -5,10 +5,14 @@ This module eliminates code duplication across YouTube, Twitter, and AFM classes
 by centralizing LLM client initialization and interaction logic.
 """
 
+import hashlib
+import json
 import logging
 from typing import Any, Dict, List, Optional
 
 from mistralai import Mistral
+
+from llm_cache import LLMCache, get_llm_cache
 
 
 class LLMService:
@@ -24,20 +28,39 @@ class LLMService:
 
     _instances: Dict[str, "LLMService"] = {}
 
-    def __init__(self, api_key: str, default_model: str = "mistral-medium-latest"):
+    def __init__(
+        self,
+        api_key: str,
+        default_model: str = "mistral-medium-latest",
+        enable_cache: bool = False,
+        cache: Optional[LLMCache] = None,
+    ):
         """
         Initialize the LLM service.
 
         Args:
             api_key: The API key for the LLM provider (e.g., Mistral AI)
             default_model: Default model to use for completions
+            enable_cache: Whether to enable response caching (default: False)
+            cache: Optional LLMCache instance. If enable_cache is True and this is None,
+                   the default global cache will be used.
 
         Example:
             >>> service = LLMService(api_key="sk-...", default_model="mistral-large-latest")
+            >>> # With caching enabled:
+            >>> service = LLMService(api_key="sk-...", enable_cache=True)
         """
         self.api_key = api_key
         self.default_model = default_model
+        self.enable_cache = enable_cache
         self._client: Optional[Mistral] = None
+
+        # Set up caching if enabled
+        if enable_cache:
+            self.cache = cache if cache is not None else get_llm_cache()
+            logging.info("LLM response caching enabled")
+        else:
+            self.cache = None
 
     @classmethod
     def get_instance(
@@ -84,6 +107,7 @@ class LLMService:
         model: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
+        use_cache: bool = True,
     ) -> str:
         """
         Perform a chat completion using the LLM.
@@ -93,6 +117,8 @@ class LLMService:
             model: Model to use (defaults to instance's default_model)
             temperature: Sampling temperature (0.0 to 1.0)
             max_tokens: Maximum tokens to generate
+            use_cache: Whether to use cache for this request (default: True).
+                       Only used if caching is enabled for the service.
 
         Returns:
             The completion text from the LLM
@@ -110,6 +136,23 @@ class LLMService:
         try:
             model_to_use = model or self.default_model
 
+            # Create a unique cache key from messages and parameters
+            if self.enable_cache and use_cache and self.cache is not None:
+                # Create a stable prompt representation for caching
+                prompt_key = json.dumps(messages, sort_keys=True)
+
+                # Check cache first
+                cached_response = self.cache.get(
+                    prompt=prompt_key,
+                    model=model_to_use,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+
+                if cached_response is not None:
+                    logging.info(f"Using cached response for model: {model_to_use}")
+                    return cached_response
+
             # Prepare API call parameters
             params = {"model": model_to_use, "messages": messages, "temperature": temperature}
 
@@ -119,8 +162,19 @@ class LLMService:
             # Make the API call
             response = self.client.chat.complete(**params)
 
-            # Extract and return the completion text
+            # Extract the completion text
             completion = response.choices[0].message.content
+
+            # Cache the response if caching is enabled
+            if self.enable_cache and use_cache and self.cache is not None:
+                prompt_key = json.dumps(messages, sort_keys=True)
+                self.cache.set(
+                    prompt=prompt_key,
+                    response=completion,
+                    model=model_to_use,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
 
             logging.info(f"Chat completion successful with model: {model_to_use}")
             return completion

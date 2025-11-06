@@ -12,6 +12,8 @@ from webdriver_manager.firefox import GeckoDriverManager
 from config import *
 from constants import *
 from status import *
+from browser_factory import BrowserFactory
+from protocols import BrowserProtocol
 
 from .Twitter import Twitter
 
@@ -28,6 +30,7 @@ class AffiliateMarketing:
         twitter_account_uuid: str,
         account_nickname: str,
         topic: str,
+        browser: Optional[webdriver.Firefox] = None,
     ) -> None:
         """
         Initializes the Affiliate Marketing class.
@@ -38,30 +41,29 @@ class AffiliateMarketing:
             twitter_account_uuid (str): The Twitter account UUID
             account_nickname (str): The account nickname
             topic (str): The topic of the product
+            browser (Optional[webdriver.Firefox]): Optional pre-configured browser instance.
+                If not provided, a new browser will be created using BrowserFactory.
 
         Returns:
             None
         """
         self._fp_profile_path: str = fp_profile_path
 
-        # Initialize the Firefox profile
-        self.options: Options = Options()
-
-        # Set headless state of browser
-        if get_headless():
-            self.options.add_argument("--headless")
-
-        # Set the profile path
-        self.options.add_argument("-profile")
-        self.options.add_argument(fp_profile_path)
-
-        # Set the service
-        self.service: Service = Service(GeckoDriverManager().install())
-
-        # Initialize the browser
-        self.browser: webdriver.Firefox = webdriver.Firefox(
-            service=self.service, options=self.options
-        )
+        # Dependency injection: Use provided browser or create new one
+        if browser is not None:
+            # Use injected browser instance
+            self.browser = browser
+            logging.info("Using injected browser instance")
+        else:
+            # Create browser using BrowserFactory for consistency
+            # Note: This maintains backward compatibility by creating browser if not injected
+            headless = get_headless()
+            self.browser = BrowserFactory.create_firefox_browser(
+                profile_path=fp_profile_path,
+                headless=headless,
+                use_profile_object=False,  # AFM uses add_argument method
+            )
+            logging.info("Created new browser instance via BrowserFactory")
 
         # Set the affiliate link
         self.affiliate_link: str = affiliate_link

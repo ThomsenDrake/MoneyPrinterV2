@@ -26,9 +26,11 @@ from webdriver_manager.firefox import GeckoDriverManager
 from cache import *
 from config import *
 from constants import *
-from http_client import get_http_client
+from http_client import get_http_client, HTTPClient
 from status import *
 from utils import *
+from browser_factory import BrowserFactory
+from protocols import BrowserProtocol, HTTPClientProtocol
 
 from .Tts import TTS
 
@@ -58,6 +60,8 @@ class YouTube:
         fp_profile_path: str,
         niche: str,
         language: str,
+        browser: Optional[webdriver.Firefox] = None,
+        http_client: Optional[HTTPClientProtocol] = None,
     ) -> None:
         """
         Constructor for YouTube Class.
@@ -68,6 +72,10 @@ class YouTube:
             fp_profile_path (str): Path to the firefox profile that is logged into the specificed YouTube Account.
             niche (str): The niche of the provided YouTube Channel.
             language (str): The language of the Automation.
+            browser (Optional[webdriver.Firefox]): Optional pre-configured browser instance.
+                If not provided, a new browser will be created using BrowserFactory.
+            http_client (Optional[HTTPClientProtocol]): Optional HTTP client for API calls.
+                If not provided, the default singleton HTTPClient will be used.
 
         Returns:
             None
@@ -80,26 +88,24 @@ class YouTube:
 
         self.images = []
 
-        # Initialize HTTP client for connection pooling
-        self.http_client = get_http_client()
+        # Dependency injection: Use provided HTTP client or get default singleton
+        self.http_client = http_client if http_client is not None else get_http_client()
 
-        # Initialize the Firefox profile
-        self.options: Options = Options()
-
-        # Set headless state of browser
-        if get_headless():
-            self.options.add_argument("--headless")
-
-        profile = webdriver.FirefoxProfile(self._fp_profile_path)
-        self.options.profile = profile
-
-        # Set the service
-        self.service: Service = Service(GeckoDriverManager().install())
-
-        # Initialize the browser
-        self.browser: webdriver.Firefox = webdriver.Firefox(
-            service=self.service, options=self.options
-        )
+        # Dependency injection: Use provided browser or create new one
+        if browser is not None:
+            # Use injected browser instance
+            self.browser = browser
+            logging.info("Using injected browser instance")
+        else:
+            # Create browser using BrowserFactory for consistency
+            # Note: This maintains backward compatibility by creating browser if not injected
+            headless = get_headless()
+            self.browser = BrowserFactory.create_firefox_browser(
+                profile_path=self._fp_profile_path,
+                headless=headless,
+                use_profile_object=True,  # YouTube uses FirefoxProfile object method
+            )
+            logging.info("Created new browser instance via BrowserFactory")
 
     def __enter__(self) -> "YouTube":
         """
