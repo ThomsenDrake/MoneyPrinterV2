@@ -9,7 +9,6 @@ from selenium_firefox import *
 from browser_factory import BrowserFactory
 from config import *
 from constants import *
-from protocols import BrowserProtocol
 from status import *
 
 from .Twitter import Twitter

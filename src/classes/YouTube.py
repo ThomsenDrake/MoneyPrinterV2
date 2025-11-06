@@ -24,8 +24,8 @@ from browser_factory import BrowserFactory
 from cache import *
 from config import *
 from constants import *
-from http_client import HTTPClient, get_http_client
-from protocols import BrowserProtocol, HTTPClientProtocol
+from http_client import get_http_client
+from protocols import HTTPClientProtocol
 from status import *
 from utils import *
 

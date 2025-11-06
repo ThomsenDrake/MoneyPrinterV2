@@ -17,7 +17,6 @@ from browser_factory import BrowserFactory
 from cache import *
 from config import *
 from constants import *
-from protocols import BrowserProtocol
 from status import *
 
 
