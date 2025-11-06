@@ -1,4 +1,8 @@
 {
+  "_comment": "IMPORTANT: API keys and secrets should be stored in .env file, not here!",
+  "_comment2": "Copy .env.example to .env and fill in your secrets there.",
+  "_comment3": "This file is for non-sensitive configuration only.",
+
   "verbose": true,
   "firefox_profile": "",
   "headless": false,
@@ -13,16 +17,13 @@
   "email": {
     "smtp_server": "smtp.gmail.com",
     "smtp_port": 587,
-    "username": "",
-    "password": ""
+    "_comment": "Use SMTP_USERNAME and SMTP_PASSWORD in .env instead of storing credentials here"
   },
   "google_maps_scraper_niche": "",
   "scraper_timeout": 300,
   "outreach_message_subject": "I have a question...",
   "outreach_message_body_file": "outreach_message.html",
-  "assembly_ai_api_key": "",
-  "mistral_api_key": "",
-  "venice_api_key": "",
+  "_api_keys_comment": "Store API keys in .env file using ASSEMBLYAI_API_KEY, MISTRAL_API_KEY, VENICE_API_KEY",
   "font": "bold_font.ttf",
   "imagemagick_path": "Path to magick.exe or on linux/macOS just /usr/bin/convert",
   "script_sentence_length": 4
