@@ -485,7 +485,9 @@ class YouTube:
                 return None
             return self.generate_image_cloudflare(prompt, worker_url)
 
-    def generate_images_parallel(self, prompts: List[str], max_workers: Optional[int] = None) -> List[str]:
+    def generate_images_parallel(
+        self, prompts: List[str], max_workers: Optional[int] = None
+    ) -> List[str]:
         """
         Generates AI Images in parallel using ThreadPoolExecutor.
 
