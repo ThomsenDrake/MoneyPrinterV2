@@ -4,6 +4,7 @@ import platform
 import random
 import subprocess
 import zipfile
+from typing import Optional
 
 from config import *
 from http_client import get_http_client
@@ -118,12 +119,12 @@ def fetch_songs() -> None:
         error(f"Error occurred while fetching songs: {str(e)}")
 
 
-def choose_random_song() -> str:
+def choose_random_song() -> Optional[str]:
     """
     Chooses a random song from the songs/ directory.
 
     Returns:
-        str: The path to the chosen song.
+        Optional[str]: The path to the chosen song, or None if no songs are available.
     """
     try:
         songs = os.listdir(os.path.join(ROOT_DIR, "Songs"))

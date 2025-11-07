@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from prettytable import PrettyTable
 from termcolor import colored
@@ -25,12 +25,12 @@ from validation import validate_choice, validate_integer, validate_non_empty_str
 logger = setup_logger(__name__)
 
 
-def get_user_choice(options: list) -> int:
+def get_user_choice(options: List[str]) -> int:
     """
     Display menu options and get validated user choice.
 
     Args:
-        options (list): List of menu options to display
+        options (List[str]): List of menu options to display
 
     Returns:
         int: The selected option number (1-indexed)
@@ -167,7 +167,7 @@ def run_twitter_operations(selected_account: Dict[str, Any]) -> None:
             break
 
 
-def main():
+def main() -> None:
     """Main entry point for the application, providing a menu-driven interface
     to manage YouTube, Twitter bots, Affiliate Marketing, and Outreach tasks.
 

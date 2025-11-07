@@ -9,7 +9,7 @@ from config import get_verbose
 from status import *
 
 
-def main():
+def main() -> None:
     """Main function to post content to Twitter or upload videos to YouTube.
 
     This function determines its operation based on command-line arguments:
