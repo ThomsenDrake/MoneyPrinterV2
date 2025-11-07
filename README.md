@@ -44,7 +44,7 @@ MoneyPrinterV2 is a comprehensive automation platform that generates engaging co
 
 ```bash
 # Clone the repository
-git clone https://github.com/thomsendrake/MoneyPrinterV2.git
+git clone https://github.com/FujiwaraChoki/MoneyPrinterV2.git
 cd MoneyPrinterV2
 
 # Setup configuration
@@ -177,7 +177,7 @@ We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) 
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/thomsendrake/moneyprinterv2:latest
+docker pull ghcr.io/fujiwaraChoki/moneyprinterv2:latest
 
 # Run with docker
 docker run -it --rm \
@@ -185,7 +185,7 @@ docker run -it --rm \
   -v $(pwd)/config.json:/app/config.json:ro \
   -v $(pwd)/cache:/app/cache \
   -v $(pwd)/output:/app/output \
-  ghcr.io/thomsendrake/moneyprinterv2:latest
+  ghcr.io/fujiwaraChoki/moneyprinterv2:latest
 ```
 
 ### Building from Source
@@ -219,4 +219,4 @@ This software is provided for educational and legitimate business purposes only.
 
 ## 🙏 Original Project
 
-MoneyPrinterV2 is a comprehensive rewrite and evolution of the original [MoneyPrinter](https://github.com/FujiwaraChoki/MoneyPrinter) project by FujiwaraChoki. This version maintains the core automation philosophy while introducing enterprise-grade features, improved architecture, and comprehensive testing. We acknowledge and appreciate the original creator's innovative concept and community contributions.
+This project is a fork of [MoneyPrinterV2](https://github.com/FujiwaraChoki/MoneyPrinterV2) from FujiwaraChoki. It maintains the core automation philosophy while introducing additional features, improvements, and customizations. We acknowledge and appreciate the original creator's innovative work and community contributions.
