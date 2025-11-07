@@ -955,24 +955,24 @@ class YouTube:
             error(f"YouTube upload failed - element not found: {str(e)}")
             try:
                 self.browser.quit()
-            except:
-                pass
+            except Exception as quit_error:
+                logging.warning(f"Error closing browser during cleanup: {str(quit_error)}")
             return False
         except WebDriverException as e:
             logging.error(f"WebDriver error during upload: {str(e)}", exc_info=True)
             error(f"Browser error during upload: {str(e)}")
             try:
                 self.browser.quit()
-            except:
-                pass
+            except Exception as quit_error:
+                logging.warning(f"Error closing browser during cleanup: {str(quit_error)}")
             return False
         except Exception as e:
             logging.error(f"Unexpected error during video upload: {str(e)}", exc_info=True)
             error(f"Unexpected error during video upload: {str(e)}")
             try:
                 self.browser.quit()
-            except:
-                pass
+            except Exception as quit_error:
+                logging.warning(f"Error closing browser during cleanup: {str(quit_error)}")
             return False
 
     def get_videos(self) -> List[Dict[str, Any]]:

@@ -123,7 +123,6 @@ class Outreach:
                 subprocess.run(
                     ["move", "google-maps-scraper.exe", "..\\google-maps-scraper.exe"],
                     check=True,
-                    shell=True,
                 )
             else:
                 subprocess.run(["mv", "google-maps-scraper", "../google-maps-scraper"], check=True)
