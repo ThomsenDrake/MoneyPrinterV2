@@ -1,4 +1,4 @@
-# Architecture Documentation - MoneyPrinterV2
+# Architecture Documentation - AutoMuse
 
 **Version:** 1.0
 **Last Updated:** 2025-11-07
@@ -20,7 +20,7 @@
 
 ## System Overview
 
-MoneyPrinterV2 is an enterprise-grade automation framework built with Python that provides comprehensive content creation and social media management capabilities.
+AutoMuse is an enterprise-grade automation framework built with Python that provides comprehensive content creation and social media management capabilities.
 
 ### High-Level Architecture
 
@@ -354,7 +354,7 @@ graph LR
 
 ### Protocol-Based DI (Phase 8 Implementation)
 
-MoneyPrinterV2 uses Protocol interfaces for dependency injection, enabling:
+AutoMuse uses Protocol interfaces for dependency injection, enabling:
 - **Loose coupling**: Components depend on abstractions
 - **Testability**: Easy mocking with protocol implementations
 - **Flexibility**: Swap implementations without changing code

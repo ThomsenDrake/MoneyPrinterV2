@@ -1,6 +1,6 @@
 # Dependency Management Guide
 
-This document explains how to manage dependencies in MoneyPrinterV2.
+This document explains how to manage dependencies in AutoMuse.
 
 ## Overview
 

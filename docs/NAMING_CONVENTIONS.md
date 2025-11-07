@@ -1,4 +1,4 @@
-# Naming Conventions - MoneyPrinterV2
+# Naming Conventions - AutoMuse
 
 **Version:** 1.0
 **Last Updated:** 2025-11-07
@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document establishes naming conventions for the MoneyPrinterV2 codebase to ensure consistency, readability, and maintainability. These conventions align with [PEP 8](https://pep8.org/) and Python community best practices.
+This document establishes naming conventions for the AutoMuse codebase to ensure consistency, readability, and maintainability. These conventions align with [PEP 8](https://pep8.org/) and Python community best practices.
 
 ---
 
@@ -496,7 +496,7 @@ API_TIMEOUT = 30
 - [PEP 8 - Style Guide for Python Code](https://pep8.org/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 - [Python Naming Conventions](https://visualgit.readthedocs.io/en/latest/pages/naming_convention.html)
-- MoneyPrinterV2 `docs/DOCSTRING_STYLE_GUIDE.md`
+- AutoMuse `docs/DOCSTRING_STYLE_GUIDE.md`
 
 ---
 

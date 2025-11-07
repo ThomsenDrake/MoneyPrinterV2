@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "MoneyPrinterV2 - Development Commands"
+	@echo "AutoMuse - Development Commands"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  make install      - Install all dependencies (including dev dependencies)"

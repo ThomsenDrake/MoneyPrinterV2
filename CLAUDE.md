@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MoneyPrinterV2 (MPV2) is a Python-based automation system for creating and managing social media content across multiple platforms. It automates video generation for YouTube Shorts, Twitter posting, affiliate marketing, and local business outreach. The project uses browser automation (Selenium), AI services (Mistral AI, Venice AI), and text-to-speech (CoquiTTS) for content generation.
+AutoMuse is a Python-based automation platform for creating and managing social media content across multiple platforms. It automates video generation for YouTube Shorts, Twitter posting, affiliate marketing, and local business outreach. The project uses browser automation (Selenium), AI services (Mistral AI, Venice AI), and text-to-speech (CoquiTTS) for content generation.
 
 **Python Version**: 3.9+ required
 
@@ -67,13 +67,13 @@ pre-commit install
 docker-compose up
 
 # Or use docker directly
-docker pull ghcr.io/thomsendrake/moneyprinterv2:latest
+docker pull ghcr.io/thomsendrake/automuse:latest
 docker run -it --rm \
   --env-file .env \
   -v $(pwd)/config.json:/app/config.json:ro \
   -v $(pwd)/cache:/app/cache \
   -v $(pwd)/output:/app/output \
-  ghcr.io/thomsendrake/moneyprinterv2:latest
+  ghcr.io/thomsendrake/automuse:latest
 ```
 
 See [DOCKER.md](DOCKER.md) for detailed Docker instructions.
@@ -122,7 +122,7 @@ See [DOCKER.md](DOCKER.md) for detailed Docker instructions.
 
 ### Browser Automation
 
-MoneyPrinterV2 uses Selenium with Firefox or undetected-chromedriver. Key patterns:
+AutoMuse uses Selenium with Firefox or undetected-chromedriver. Key patterns:
 - SeleniumService provides high-level operations (wait_for_element, click, type_text)
 - Browser instances are created per-account using Firefox profiles
 - Headless mode supported via HEADLESS environment variable
@@ -294,7 +294,7 @@ make all  # Format code and run all quality checks
 
 ## Project Context
 
-This is a fork that has diverged significantly from the original MoneyPrinterV2 project. Major improvements include:
+AutoMuse is a fork that has diverged significantly from the original MoneyPrinterV2 project. Major improvements include:
 - Comprehensive error handling and custom exceptions
 - Pydantic-based configuration validation
 - Selenium service abstraction layer

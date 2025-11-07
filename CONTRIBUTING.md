@@ -1,6 +1,6 @@
 # Contributing
 
-MoneyPrinterV2 is an open source project and we encourage contributions. However, we ask that you follow these guidelines when opening a Pull Request (PR):
+AutoMuse is an open source project and we encourage contributions. However, we ask that you follow these guidelines when opening a Pull Request (PR):
 
 1. **The `main` branch is the default branch.** All PRs should be opened against the `main` branch.
 2. **All PRs should be opened against an issue.** If there is no issue for your PR, please open one first and then open a PR against it.

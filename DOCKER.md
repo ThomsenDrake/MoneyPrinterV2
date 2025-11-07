@@ -1,6 +1,6 @@
-# Docker Deployment Guide for MoneyPrinterV2
+# Docker Deployment Guide for AutoMuse
 
-This guide explains how to deploy and run MoneyPrinterV2 using Docker containers.
+This guide explains how to deploy and run AutoMuse using Docker containers.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ Pull and run the pre-built image from GitHub Container Registry:
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/thomsendrake/moneyprinterv2:latest
+docker pull ghcr.io/thomsendrake/automuse:latest
 
 # Setup configuration files
 cp .env.example .env
@@ -58,14 +58,14 @@ cp config.example.json config.json
 docker-compose build
 
 # Or build directly with Docker
-docker build -t moneyprinterv2:latest .
+docker build -t automuse:latest .
 ```
 
 #### 3. Run the Container
 
 ```bash
 # Run with docker-compose (recommended)
-docker-compose run --rm moneyprinter
+docker-compose run --rm automuse
 
 # Or run directly with Docker
 docker run -it --rm \
@@ -75,7 +75,7 @@ docker run -it --rm \
   -v $(pwd)/output:/app/output \
   -v $(pwd)/songs:/app/songs \
   -v $(pwd)/fonts:/app/fonts \
-  moneyprinterv2:latest
+  automuse:latest
 ```
 
 ## Using the Pre-built Image
@@ -88,13 +88,13 @@ After merging this PR, the GitHub Actions workflow will automatically build and 
 
 1. Go to your GitHub repository
 2. Click on "Packages" on the right sidebar (or visit https://github.com/users/ThomsenDrake/packages)
-3. Find the `moneyprinterv2` package
+3. Find the `automuse` package
 4. Click "Package settings"
 5. Scroll to "Danger Zone"
 6. Click "Change visibility" and set to "Public"
 7. Connect the package to your repository for better visibility
 
-Once the package is public, anyone can pull it with `docker pull ghcr.io/thomsendrake/moneyprinterv2:latest`
+Once the package is public, anyone can pull it with `docker pull ghcr.io/thomsendrake/automuse:latest`
 
 ### Available Tags
 
@@ -108,13 +108,13 @@ Once the package is public, anyone can pull it with `docker pull ghcr.io/thomsen
 
 ```bash
 # Latest stable version
-docker pull ghcr.io/thomsendrake/moneyprinterv2:latest
+docker pull ghcr.io/thomsendrake/automuse:latest
 
 # Specific version
-docker pull ghcr.io/thomsendrake/moneyprinterv2:v2.0.0
+docker pull ghcr.io/thomsendrake/automuse:v2.0.0
 
 # Latest main branch
-docker pull ghcr.io/thomsendrake/moneyprinterv2:main
+docker pull ghcr.io/thomsendrake/automuse:main
 ```
 
 ### Run Pre-built Image
@@ -128,7 +128,7 @@ docker run -it --rm \
   -v $(pwd)/output:/app/output \
   -v $(pwd)/songs:/app/songs \
   -v $(pwd)/fonts:/app/fonts \
-  ghcr.io/thomsendrake/moneyprinterv2:latest
+  ghcr.io/thomsendrake/automuse:latest
 ```
 
 ## Docker Compose Configuration
@@ -184,7 +184,7 @@ docker-compose down
 
 ## Browser Automation Considerations
 
-MoneyPrinterV2 uses Selenium with Firefox for browser automation. In Docker:
+AutoMuse uses Selenium with Firefox for browser automation. In Docker:
 
 - **Headless Mode:** Set `HEADLESS=true` in `.env` for server environments
 - **Firefox Profile:** Custom profiles can be mounted if needed
@@ -206,7 +206,7 @@ docker run -it --rm \
   -v $(pwd)/config.json:/app/config.json:ro \
   -v $(pwd)/cache:/app/cache \
   -v $(pwd)/output:/app/output \
-  moneyprinterv2:latest
+  automuse:latest
 ```
 
 ## Troubleshooting
@@ -220,7 +220,7 @@ If you encounter permission issues with mounted volumes:
 sudo chown -R 1000:1000 cache output songs fonts temp
 
 # Or run container as root (not recommended for production)
-docker-compose run --user root moneyprinter
+docker-compose run --user root automuse
 ```
 
 ### Memory Issues
@@ -249,7 +249,7 @@ If you get ImageMagick policy errors, the Dockerfile includes a fix. If issues p
 
 ```bash
 # Check ImageMagick policy in container
-docker-compose run --rm moneyprinter cat /etc/ImageMagick-6/policy.xml
+docker-compose run --rm automuse cat /etc/ImageMagick-6/policy.xml
 ```
 
 ## Environment Variables
@@ -276,7 +276,7 @@ FIREFOX_PROFILE=                 # Leave empty for default
 
 1. **Never commit secrets:** Keep `.env` and `config.json` out of version control
 2. **Use read-only mounts:** Config files are mounted as read-only (`:ro`)
-3. **Run as non-root:** Container uses `mpv2user` (UID 1000) by default
+3. **Run as non-root:** Container uses `automuseuser` (UID 1000) by default
 4. **Limit resources:** Resource limits prevent container from consuming all system resources
 5. **Network isolation:** Container uses a dedicated bridge network
 
@@ -297,10 +297,10 @@ For production deployments:
 3. **Set up monitoring:**
    ```bash
    # Monitor container health
-   docker stats moneyprinterv2
+   docker stats automuse
 
    # View logs
-   docker logs -f moneyprinterv2
+   docker logs -f automuse
    ```
 
 4. **Use Docker secrets for sensitive data:**
@@ -345,7 +345,7 @@ To remove all Docker artifacts:
 docker-compose down
 
 # Remove image
-docker rmi moneyprinterv2:latest
+docker rmi automuse:latest
 
 # Clean up volumes (WARNING: This deletes all data!)
 docker-compose down -v
@@ -355,7 +355,7 @@ docker-compose down -v
 
 For Docker-specific issues:
 1. Check container logs: `docker-compose logs`
-2. Inspect container: `docker-compose exec moneyprinter bash`
+2. Inspect container: `docker-compose exec automuse bash`
 3. Review Docker documentation: https://docs.docker.com/
 
 For application issues, refer to the main [README.md](README.md) and project documentation.

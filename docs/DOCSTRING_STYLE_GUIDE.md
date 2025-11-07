@@ -1,6 +1,6 @@
 # Docstring Style Guide
 
-This document defines the standard docstring format for MoneyPrinterV2.
+This document defines the standard docstring format for AutoMuse.
 
 ## Standard: Google Style
 
