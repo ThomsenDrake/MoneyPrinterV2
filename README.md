@@ -1,138 +1,222 @@
-# MoneyPrinter V2
+# MoneyPrinterV2
 
-> ♥︎ **Sponsor**: The Best AI Chat App: [shiori.ai](https://www.shiori.ai)
+[![made with python](https://img.shields.io/badge/made%20with-Python-3776ab?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg?style=for-the-badge)](https://www.python.org/downloads/release/python-390/)
 
----
+**Automated Content Creation & Social Media Management Platform**
 
-> 𝕏 Also, follow me on X: [@DevBySami](https://x.com/DevBySami).
+MoneyPrinterV2 is a comprehensive automation platform that generates engaging content, manages multiple social media accounts, handles affiliate marketing, and automates business outreach. Built with Python 3.9+, it combines AI-powered content generation with robust scheduling and multi-account management capabilities.
 
-[![madewithlove](https://img.shields.io/badge/made_with-%E2%9D%A4-red?style=for-the-badge&labelColor=orange)](https://github.com/FujiwaraChoki/MoneyPrinterV2)
+## 🚀 Key Features
 
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Donate-brightgreen?logo=buymeacoffee)](https://www.buymeacoffee.com/fujicodes)
-[![GitHub license](https://img.shields.io/github/license/FujiwaraChoki/MoneyPrinterV2?style=for-the-badge)](https://github.com/FujiwaraChoki/MoneyPrinterV2/blob/main/LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/FujiwaraChoki/MoneyPrinterV2?style=for-the-badge)](https://github.com/FujiwaraChoki/MoneyPrinterV2/issues)
-[![GitHub stars](https://img.shields.io/github/stars/FujiwaraChoki/MoneyPrinterV2?style=for-the-badge)](https://github.com/FujiwaraChoki/MoneyPrinterV2/stargazers)
-[![Discord](https://img.shields.io/discord/1134848537704804432?style=for-the-badge)](https://dsc.gg/fuji-community)
+### Content Creation
+- **YouTube Shorts Automation**: Generate, edit, and upload engaging short-form videos with AI-powered scripts, voiceovers, and subtitles
+- **Twitter Content Management**: Create and schedule tweets with AI-generated content and trending hashtag optimization
+- **Text-to-Speech**: High-quality voice generation using CoquiTTS with multiple voice options
+- **Image Generation**: AI-powered visual content creation using Venice AI
 
-An Application that automates the process of making money online.
-MPV2 (MoneyPrinter Version 2) is, as the name suggests, the second version of the MoneyPrinter project. It is a complete rewrite of the original project, with a focus on a wider range of features and a more modular architecture.
+### Marketing & Outreach
+- **Affiliate Marketing**: Automated Amazon affiliate product promotion with content optimization
+- **Business Discovery**: Find and analyze local businesses for outreach opportunities
+- **Cold Email Automation**: Personalized business outreach with scheduling and tracking
+- **Multi-Platform Integration**: Seamless content distribution across platforms
 
-> **Note:** MPV2 needs Python 3.9 to function effectively.
-> Watch the YouTube video [here](https://youtu.be/wAZ_ZSuIqfk)
+### Enterprise Features
+- **Multi-Account Management**: Handle multiple accounts across platforms with isolated profiles
+- **CRON Job Scheduling**: Automated scheduling for all features with flexible timing
+- **Rate Limit Management**: Intelligent API rate limiting with retry logic
+- **Comprehensive Logging**: Detailed activity logs with rotation and analysis
 
-## Features
+## 🛠 Technology Stack
 
-- [x] Twitter Bot (with CRON Jobs => `scheduler`)
-- [x] YouTube Shorts Automater (with CRON Jobs => `scheduler`)
-- [x] Affiliate Marketing (Amazon + Twitter)
-- [x] Find local businesses & cold outreach
+- **Core**: Python 3.9+ with modular architecture
+- **Web Automation**: Selenium WebDriver with Firefox/Geckodriver
+- **Video Processing**: MoviePy with ImageMagick for professional subtitle rendering
+- **AI Services**: Mistral AI (text), Venice AI (images), AssemblyAI (speech-to-text)
+- **Configuration**: Pydantic validation with environment variables and JSON config
+- **Testing**: pytest with comprehensive coverage reporting
+- **Deployment**: Docker with multi-stage builds and GitHub Container Registry
 
-## Versions
+## 📦 Quick Start
 
-MoneyPrinter has different versions for multiple languages developed by the community for the community. Here are some known versions:
-
-- Chinese: [MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo)
-
-If you would like to submit your own version/fork of MoneyPrinter, please open an issue describing the changes you made to the fork.
-
-## Installation
-
-### Option 1: Docker (Recommended)
-
-The easiest way to run MoneyPrinterV2 is using Docker with our pre-built image. No compilation needed!
+### Docker Installation (Recommended)
 
 ```bash
 # Clone the repository
 git clone https://github.com/FujiwaraChoki/MoneyPrinterV2.git
 cd MoneyPrinterV2
 
-# Setup configuration files
+# Setup configuration
 cp .env.example .env
 cp config.example.json config.json
-# Edit .env and config.json with your API keys and settings
+# Edit .env with your API keys and config.json with your preferences
 
-# Pull and run with Docker Compose (uses pre-built image)
+# Run with Docker Compose
 docker-compose up
 ```
 
-**Or use docker directly:**
+### Local Installation
 
 ```bash
-# Pull the image
-docker pull ghcr.io/thomsendrake/moneyprinterv2:latest
+# Clone and setup
+git clone https://github.com/thomsendrake/MoneyPrinterV2.git
+cd MoneyPrinterV2
 
-# Run it
+# Copy and configure
+cp .env.example .env
+cp config.example.json config.json
+# Edit configuration files with your settings
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: .\venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python src/main.py
+```
+
+**System Requirements:**
+- Python 3.9+ (strict requirement)
+- Firefox browser
+- Geckodriver for Selenium
+- ImageMagick for video processing
+- 4GB+ RAM recommended
+
+## 🔧 Configuration
+
+MoneyPrinterV2 uses a 3-tier configuration system:
+
+1. **Environment Variables** (`.env`) - API keys and sensitive data
+2. **JSON Configuration** (`config.json`) - Application settings
+3. **Constants** (`constants.py`) - Default fallback values
+
+### Essential API Keys
+
+```bash
+# Required for core functionality
+ASSEMBLYAI_API_KEY=     # Speech-to-text and subtitle generation
+MISTRAL_API_KEY=        # AI text generation
+VENICE_API_KEY=         # AI image generation
+
+# For email outreach features
+SMTP_USERNAME=          # Email account
+SMTP_PASSWORD=          # App password
+
+# Optional optimizations
+FIREFOX_PROFILE=        # Custom browser profile
+PROXY_SERVER=          # Proxy configuration
+```
+
+### Configuration Options
+
+```json
+{
+  "verbose": true,
+  "headless": false,
+  "threads": 2,
+  "font": "bold_font.ttf",
+  "imagemagick_path": "/usr/bin/convert",
+  "script_sentence_length": 4,
+  "twitter_language": "English"
+}
+```
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the [`docs/`](docs/) directory:
+
+- **[Setup Guide](ENV_SETUP.md)** - Detailed installation and configuration
+- **[Docker Guide](DOCKER.md)** - Container deployment options
+- **[Cloud Recommendations](CLOUD_SETUP_RECOMMENDATIONS.md)** - Cloud hosting best practices
+- **[Dependency Management](DEPENDENCY_MANAGEMENT.md)** - Handling dependencies
+- **[Secrets Management](SECRETS_MANAGEMENT.md)** - Secure API key handling
+- **[Technical Debt](TECHNICAL_DEBT.md)** - Known issues and roadmap
+
+## 🧪 Development
+
+### Code Quality
+
+```bash
+# Run all quality checks
+make quality
+
+# Individual commands
+make lint          # Code linting with flake8
+make format        # Code formatting with Black
+make type-check    # Type checking with mypy
+make test          # Run test suite with coverage
+```
+
+### Testing
+
+```bash
+# Run all tests
+make test
+
+# Specific test categories
+make test-unit          # Unit tests only
+make test-integration   # Integration tests
+make test-slow         # Time-consuming tests
+```
+
+### Contributing
+
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for:
+- Code style guidelines
+- Development setup
+- Pull request process
+- Issue reporting
+
+## 🐳 Docker Deployment
+
+### Using Pre-built Images
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/fujiwaraChoki/moneyprinterv2:latest
+
+# Run with docker
 docker run -it --rm \
   --env-file .env \
   -v $(pwd)/config.json:/app/config.json:ro \
   -v $(pwd)/cache:/app/cache \
   -v $(pwd)/output:/app/output \
-  ghcr.io/thomsendrake/moneyprinterv2:latest
+  ghcr.io/fujiwaraChoki/moneyprinterv2:latest
 ```
 
-For detailed Docker instructions, building from source, and advanced configurations, see [DOCKER.md](DOCKER.md).
-
-### Option 2: Local Installation
-
-Please install [Microsoft Visual C++ build tools](https://visualstudio.microsoft.com/de/visual-cpp-build-tools/) first, so that CoquiTTS can function correctly.
-
-> ⚠️ If you are planning to reach out to scraped businesses per E-Mail, please first install the [Go Programming Language](https://golang.org/).
+### Building from Source
 
 ```bash
-git clone https://github.com/FujiwaraChoki/MoneyPrinterV2.git
+# Build and run with docker-compose
+docker-compose --build up
 
-cd MoneyPrinterV2
-# Copy Example Configuration and fill out values in config.json
-cp config.example.json config.json
-
-# Create a virtual environment
-python -m venv venv
-
-# Activate the virtual environment - Windows
-.\venv\Scripts\activate
-
-# Activate the virtual environment - Unix
-source venv/bin/activate
-
-# Install the requirements
-pip install -r requirements.txt
+# Or build directly
+docker build -t moneyprinterv2 .
+docker run -it --rm --env-file .env moneyprinterv2
 ```
 
-## Usage
+## 🔒 Security
 
-```bash
-# Run the application
-python src/main.py
-```
+- **API Key Protection**: All secrets stored in environment variables
+- **Browser Isolation**: Separate Firefox profiles per account
+- **Input Validation**: Comprehensive sanitization and validation
+- **Rate Limiting**: Built-in protection against API abuse
+- **File Safety**: Path traversal prevention and secure file handling
 
-## Documentation
+## 📄 License
 
-All relevant document can be found [here](docs/).
+This project is licensed under the **GNU Affero General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
 
-## Scripts
+## ⚖️ Disclaimer
 
-For easier usage, there are some scripts in the `scripts` directory, that can be used to directly access the core functionality of MPV2, without the need of user interaction.
+This software is provided for educational and legitimate business purposes only. Users are responsible for complying with platform terms of service and applicable laws. The developers assume no responsibility for misuse or any consequences resulting from the use of this software.
 
-All scripts need to be run from the root directory of the project, e.g. `bash scripts/upload_video.sh`.
+---
 
-## Contributing
+## 🙏 Original Project
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us. Check out [docs/Roadmap.md](docs/Roadmap.md) for a list of features that need to be implemented.
-
-## Code of Conduct
-
-Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## License
-
-MoneyPrinterV2 is licensed under `Affero General Public License v3.0`. See [LICENSE](LICENSE) for more information.
-
-## Acknowledgments
-
-- [CoquiTTS](https://github.com/coqui-ai/TTS)
-- [Mistral AI](https://mistral.ai/) - Text generation API
-- [Venice AI](https://venice.ai/) - Image generation API
-
-## Disclaimer
-
-This project is for educational purposes only. The author will not be responsible for any misuse of the information provided. All the information on this website is published in good faith and for general information purpose only. The author does not make any warranties about the completeness, reliability, and accuracy of this information. Any action you take upon the information you find on this website (FujiwaraChoki/MoneyPrinterV2), is strictly at your own risk. The author will not be liable for any losses and/or damages in connection with the use of our website.
+This project is a fork of [MoneyPrinterV2](https://github.com/FujiwaraChoki/MoneyPrinterV2) from FujiwaraChoki. It maintains the core automation philosophy while introducing additional features, improvements, and customizations. We acknowledge and appreciate the original creator's innovative work and community contributions.
