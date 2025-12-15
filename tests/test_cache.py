@@ -279,10 +279,9 @@ class TestAccountManagement:
 
     def test_get_accounts_empty_cache(self, temp_dir):
         """Test getting accounts when cache is empty."""
-        import config
         from cache import get_accounts
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch("cache.ROOT_DIR", str(temp_dir)):
             result = get_accounts("youtube")
 
         assert result == []
@@ -296,14 +295,13 @@ class TestAccountManagement:
 
     def test_add_account_youtube(self, temp_dir):
         """Test adding YouTube account."""
-        import config
         from cache import add_account, get_accounts
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch("cache.ROOT_DIR", str(temp_dir)):
             new_account = {"id": "999", "name": "New Account"}
             add_account("youtube", new_account)
 
@@ -314,14 +312,13 @@ class TestAccountManagement:
 
     def test_add_account_multiple(self, temp_dir):
         """Test adding multiple accounts."""
-        import config
         from cache import add_account, get_accounts
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch("cache.ROOT_DIR", str(temp_dir)):
             add_account("twitter", {"id": "1", "name": "Account 1"})
             add_account("twitter", {"id": "2", "name": "Account 2"})
 
@@ -367,24 +364,22 @@ class TestProductManagement:
 
     def test_get_products_empty(self, temp_dir):
         """Test getting products when cache is empty."""
-        import config
         from cache import get_products
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch("cache.ROOT_DIR", str(temp_dir)):
             result = get_products()
 
         assert result == []
 
     def test_add_product(self, temp_dir):
         """Test adding product."""
-        import config
         from cache import add_product, get_products
 
         # Setup
         cache_dir = temp_dir / ".mp"
         cache_dir.mkdir()
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch("cache.ROOT_DIR", str(temp_dir)):
             new_product = {"id": "prod123", "name": "Test Product", "price": 99.99}
             add_product(new_product)
 

@@ -34,17 +34,20 @@ def get_user_choice(options: List[str]) -> int:
 
     Returns:
         int: The selected option number (1-indexed)
-
-    Raises:
-        ValueError: If input is invalid
     """
     info("\n============ OPTIONS ============", False)
     for idx, option in enumerate(options):
         print(colored(f" {idx + 1}. {option}", "cyan"))
     info("=================================\n", False)
 
-    user_input = input("Select an option: ").strip()
-    return validate_integer(user_input, min_value=1, max_value=len(options), field_name="Option")
+    while True:
+        try:
+            user_input = question("Select an option: ").strip()
+            return validate_integer(
+                user_input, min_value=1, max_value=len(options), field_name="Option"
+            )
+        except ValueError as e:
+            error(str(e))
 
 
 def run_youtube_operations(selected_account: Dict[str, Any]) -> None:

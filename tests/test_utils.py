@@ -119,13 +119,13 @@ class TestRemTempFiles:
 
     def test_rem_temp_files_empty_directory(self, temp_dir):
         """Test removing temp files from empty directory."""
-        import config
+        import utils
         from utils import rem_temp_files
 
         mp_dir = temp_dir / ".mp"
         mp_dir.mkdir()
 
-        with patch.object(config, "ROOT_DIR", str(temp_dir)):
+        with patch.object(utils, "ROOT_DIR", str(temp_dir)):
             # Should not raise exception
             rem_temp_files()
 
