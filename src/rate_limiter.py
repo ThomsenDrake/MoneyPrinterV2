@@ -257,6 +257,6 @@ if __name__ == "__main__":
 
     for i in range(10):
         if limiter.wait_for_token("test"):
-            print(f"Request {i+1} allowed (remaining: {limiter.get_remaining_calls('test')})")
+            print(f"Request {i + 1} allowed (remaining: {limiter.get_remaining_calls('test')})")
         else:
-            print(f"Request {i+1} blocked")
+            print(f"Request {i + 1} blocked")

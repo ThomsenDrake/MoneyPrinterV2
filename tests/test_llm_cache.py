@@ -263,16 +263,17 @@ class TestLLMCacheStats:
 class TestLLMCacheGlobalSingleton:
     """Tests for global singleton pattern."""
 
-    def test_get_llm_cache_returns_same_instance(self):
+    def test_get_llm_cache_returns_same_instance(self, temp_cache_dir):
         """Test that get_llm_cache returns the same instance."""
         # Reset global cache
         import src.llm_cache
 
         src.llm_cache._default_cache = None
 
-        cache1 = get_llm_cache()
-        cache2 = get_llm_cache()
-        assert cache1 is cache2
+        with patch("src.llm_cache.ROOT_DIR", str(temp_cache_dir)):
+            cache1 = get_llm_cache()
+            cache2 = get_llm_cache()
+            assert cache1 is cache2
 
     def test_get_llm_cache_uses_parameters_on_first_call(self, temp_cache_dir):
         """Test that parameters are used only on first call."""
