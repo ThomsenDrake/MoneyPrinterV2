@@ -1,6 +1,6 @@
 # Environment Variables Setup Guide
 
-This guide explains how to use environment variables with MoneyPrinterV2 for better security and cloud deployment.
+This guide explains how to use environment variables with AutoMuse for better security and cloud deployment.
 
 ---
 
@@ -13,7 +13,7 @@ This guide explains how to use environment variables with MoneyPrinterV2 for bet
 - **Multiple environments**: Easy to have dev/staging/prod configurations
 
 **Current Status:**
-- MoneyPrinterV2 currently uses `config.json` for all configuration
+- AutoMuse currently uses `config.json` for all configuration
 - This guide provides a migration path to environment variables
 - Both methods can coexist during transition
 
@@ -171,7 +171,7 @@ services:
 2. Sign in to your Google Account
 3. Click "Select app" → Choose "Mail"
 4. Click "Select device" → Choose "Other"
-5. Enter "MoneyPrinterV2" as the name
+5. Enter "AutoMuse" as the name
 6. Click "Generate"
 7. Copy the 16-character password (format: `abcd efgh ijkl mnop`)
 8. Use this in `SMTP_PASSWORD` variable

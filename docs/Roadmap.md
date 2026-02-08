@@ -1,6 +1,6 @@
-# MPV2 Roadmap
+# AutoMuse Roadmap
 
-This document outlines the features that need to be implemented in MPV2.
+This document outlines the features that need to be implemented in AutoMuse.
 
 ## Features
 
@@ -11,7 +11,7 @@ This document outlines the features that need to be implemented in MPV2.
 
 ## Adding a new feature
 
-If you want to add a new feature to MPV2, please create a new issue and label it with `enhancement`. After that, create a new branch and start working on the feature. Once you are done, create a pull request and assign it to the issue you created earlier.
+If you want to add a new feature to AutoMuse, please create a new issue and label it with `enhancement`. After that, create a new branch and start working on the feature. Once you are done, create a pull request and assign it to the issue you created earlier.
 
 ## Contributing
 

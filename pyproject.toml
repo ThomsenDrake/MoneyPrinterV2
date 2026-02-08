@@ -3,9 +3,9 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "moneyprinterv2"
+name = "automuse"
 version = "2.0.0"
-description = "Automated video generation and social media automation"
+description = "AI-powered content automation platform for video generation and social media"
 requires-python = ">=3.9"
 
 [tool.black]

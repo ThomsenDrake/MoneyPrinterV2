@@ -1,6 +1,6 @@
 # Configuration Guide
 
-This document explains how to configure MoneyPrinterV2, including the configuration hierarchy, available options, and best practices.
+This document explains how to configure AutoMuse, including the configuration hierarchy, available options, and best practices.
 
 ---
 
@@ -19,7 +19,7 @@ This document explains how to configure MoneyPrinterV2, including the configurat
 
 ## Configuration Hierarchy
 
-MoneyPrinterV2 uses a **3-tier configuration hierarchy** with clear precedence:
+AutoMuse uses a **3-tier configuration hierarchy** with clear precedence:
 
 ```
 1. Environment Variables (highest priority)

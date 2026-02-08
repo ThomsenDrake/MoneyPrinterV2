@@ -7,7 +7,7 @@
 
 ## Overview
 
-MoneyPrinterV2 now supports **environment variable-based secrets management** with automatic fallback to `config.json` for backward compatibility. This approach follows security best practices and prevents accidental exposure of API keys and credentials.
+AutoMuse now supports **environment variable-based secrets management** with automatic fallback to `config.json` for backward compatibility. This approach follows security best practices and prevents accidental exposure of API keys and credentials.
 
 ## Priority Order
 
@@ -225,7 +225,7 @@ python -c "from src.health_checks import HealthChecker; HealthChecker.validate_s
 Here's a complete example (do not commit this file!):
 
 ```bash
-# MoneyPrinterV2 Environment Variables
+# AutoMuse Environment Variables
 # NEVER commit this file to version control!
 
 # =============================================================================
@@ -324,7 +324,7 @@ If you encounter issues with secrets management:
 2. Check `.env.example` for correct variable names
 3. Verify your API keys are valid at the provider's website
 4. Run health checks: `python -c "from src.health_checks import HealthChecker; HealthChecker.validate_startup()"`
-5. Check logs in `logs/moneyprinter.log` for detailed error messages
+5. Check logs in `logs/automuse.log` for detailed error messages
 
 ---
 

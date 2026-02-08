@@ -1,12 +1,14 @@
-# MoneyPrinterV2
+# AutoMuse
 
 [![made with python](https://img.shields.io/badge/made%20with-Python-3776ab?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg?style=for-the-badge)](https://www.python.org/downloads/release/python-390/)
 
-**Automated Content Creation & Social Media Management Platform**
+**AI-Powered Content Automation & Social Media Management Platform**
 
-MoneyPrinterV2 is a comprehensive automation platform that generates engaging content, manages multiple social media accounts, handles affiliate marketing, and automates business outreach. Built with Python 3.9+, it combines AI-powered content generation with robust scheduling and multi-account management capabilities.
+AutoMuse is a comprehensive automation platform that generates engaging content, manages multiple social media accounts, handles affiliate marketing, and automates business outreach. Originally forked from MoneyPrinterV2, AutoMuse has evolved into a robust, enterprise-grade automation system with comprehensive error handling, extensive testing, and modern software engineering practices.
+
+> **Note:** This is a significant fork that has diverged substantially from the original MoneyPrinterV2 project, featuring enhanced architecture, security improvements, and professional tooling.
 
 ## 🚀 Key Features
 
@@ -44,7 +46,7 @@ MoneyPrinterV2 is a comprehensive automation platform that generates engaging co
 
 ```bash
 # Clone the repository
-git clone https://github.com/FujiwaraChoki/MoneyPrinterV2.git
+git clone https://github.com/ThomsenDrake/MoneyPrinterV2.git
 cd MoneyPrinterV2
 
 # Setup configuration
@@ -88,7 +90,7 @@ python src/main.py
 
 ## 🔧 Configuration
 
-MoneyPrinterV2 uses a 3-tier configuration system:
+AutoMuse uses a 3-tier configuration system:
 
 1. **Environment Variables** (`.env`) - API keys and sensitive data
 2. **JSON Configuration** (`config.json`) - Application settings
@@ -135,6 +137,7 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 - **[Dependency Management](DEPENDENCY_MANAGEMENT.md)** - Handling dependencies
 - **[Secrets Management](SECRETS_MANAGEMENT.md)** - Secure API key handling
 - **[Technical Debt](TECHNICAL_DEBT.md)** - Known issues and roadmap
+- **[Roadmap](docs/Roadmap.md)** - Feature roadmap and planned improvements
 
 ## 🧪 Development
 
@@ -177,7 +180,7 @@ We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) 
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/fujiwaraChoki/moneyprinterv2:latest
+docker pull ghcr.io/thomsendrake/automuse:latest
 
 # Run with docker
 docker run -it --rm \
@@ -185,18 +188,19 @@ docker run -it --rm \
   -v $(pwd)/config.json:/app/config.json:ro \
   -v $(pwd)/cache:/app/cache \
   -v $(pwd)/output:/app/output \
-  ghcr.io/fujiwaraChoki/moneyprinterv2:latest
+  ghcr.io/thomsendrake/automuse:latest
 ```
 
 ### Building from Source
 
 ```bash
 # Build and run with docker-compose
-docker-compose --build up
+docker-compose build
+docker-compose up
 
 # Or build directly
-docker build -t moneyprinterv2 .
-docker run -it --rm --env-file .env moneyprinterv2
+docker build -t automuse .
+docker run -it --rm --env-file .env automuse
 ```
 
 ## 🔒 Security
@@ -219,4 +223,4 @@ This software is provided for educational and legitimate business purposes only.
 
 ## 🙏 Original Project
 
-This project is a fork of [MoneyPrinterV2](https://github.com/FujiwaraChoki/MoneyPrinterV2) from FujiwaraChoki. It maintains the core automation philosophy while introducing additional features, improvements, and customizations. We acknowledge and appreciate the original creator's innovative work and community contributions.
+AutoMuse is a fork of [MoneyPrinterV2](https://github.com/FujiwaraChoki/MoneyPrinterV2) from FujiwaraChoki. It maintains the core automation philosophy while introducing significant enhancements including comprehensive error handling, Pydantic-based configuration validation, extensive test coverage, and modern software engineering practices. We acknowledge and appreciate the original creator's innovative work and community contributions.

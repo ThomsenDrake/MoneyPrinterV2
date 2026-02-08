@@ -1,17 +1,17 @@
 version: '3.8'
 
 services:
-  moneyprinter:
+  automuse:
     # Option 1: Use pre-built image from GitHub Container Registry (recommended)
-    image: ghcr.io/thomsendrake/moneyprinterv2:latest
+    image: ghcr.io/thomsendrake/automuse:latest
 
     # Option 2: Build from source (uncomment the lines below and comment out the image line above)
     # build:
     #   context: .
     #   dockerfile: Dockerfile
-    # image: moneyprinterv2:latest
+    # image: automuse:latest
 
-    container_name: moneyprinterv2
+    container_name: automuse
 
     # Interactive terminal for CLI application
     stdin_open: true
@@ -35,7 +35,7 @@ services:
       - ./temp:/app/temp
 
       # Optional: Mount Firefox profile if you have one
-      # - ~/.mozilla:/home/mpv2user/.mozilla:ro
+      # - ~/.mozilla:/home/automuseuser/.mozilla:ro
 
       # Optional: Mount custom resources
       # - ./outreach_message.html:/app/outreach_message.html:ro

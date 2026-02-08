@@ -1,13 +1,13 @@
-# Cloud Environment Setup Recommendations for MoneyPrinterV2
+# Cloud Environment Setup Recommendations for AutoMuse
 
 **Generated:** 2025-11-04
-**Purpose:** Optimal cloud configuration for Claude Code sessions working with MoneyPrinterV2
+**Purpose:** Optimal cloud configuration for Claude Code sessions working with AutoMuse
 
 ---
 
 ## Executive Summary
 
-MoneyPrinterV2 is a Python-based automation suite for content creation (YouTube Shorts, Twitter posting, affiliate marketing, and business outreach). The application requires:
+AutoMuse is a Python-based automation suite for content creation (YouTube Shorts, Twitter posting, affiliate marketing, and business outreach). The application requires:
 - **Compute-intensive** video processing (MoviePy, CoquiTTS)
 - **Browser automation** (Selenium Firefox, headless or GUI mode)
 - **AI/LLM integration** (g4f for free GPT-4 access)
@@ -245,7 +245,7 @@ ulimit -n 4096
 
 ### Directory Structure
 ```
-/app/MoneyPrinterV2/
+/app/AutoMuse/
 ├── config.json           # PERSIST - Contains secrets
 ├── .mp/                  # PERSIST - Cache directory
 │   ├── youtube.json      # Account data
@@ -266,7 +266,7 @@ docker run -v /host/config:/app/config \
            -v /host/cache:/app/.mp \
            -v /host/firefox:/app/.mozilla \
            -v /host/models:/root/.local/share/tts \
-           moneyprinterv2
+           automuse
 ```
 
 ---
@@ -304,7 +304,7 @@ cp .env.example .env
 **For production, use cloud secret managers:**
 ```bash
 # AWS Secrets Manager
-aws secretsmanager create-secret --name moneyprinter/assemblyai-key --secret-string "xxx"
+aws secretsmanager create-secret --name automuse/assemblyai-key --secret-string "xxx"
 
 # Google Cloud Secret Manager
 echo "xxx" | gcloud secrets create assemblyai-key --data-file=-
@@ -384,8 +384,8 @@ sudo apt install -y \
   xvfb
 
 # 4. Clone repository
-git clone https://github.com/FujiwaraChoki/MoneyPrinterV2.git
-cd MoneyPrinterV2
+git clone https://github.com/FujiwaraChoki/AutoMuse.git
+cd AutoMuse
 
 # 5. Setup Python environment
 python3.9 -m venv venv
@@ -414,20 +414,20 @@ python src/main.py
 
 ### Systemd Service (for CRON jobs)
 
-Create `/etc/systemd/system/moneyprinter-youtube.service`:
+Create `/etc/systemd/system/automuse-youtube.service`:
 ```ini
 [Unit]
-Description=MoneyPrinter YouTube Automation
+Description=AutoMuse YouTube Automation
 After=network.target
 
 [Service]
 Type=simple
 User=ubuntu
-WorkingDirectory=/home/ubuntu/MoneyPrinterV2
-Environment="PATH=/home/ubuntu/MoneyPrinterV2/venv/bin"
+WorkingDirectory=/home/ubuntu/AutoMuse
+Environment="PATH=/home/ubuntu/AutoMuse/venv/bin"
 Environment="DISPLAY=:99"
 ExecStartPre=/usr/bin/Xvfb :99 -screen 0 1920x1080x24 &
-ExecStart=/home/ubuntu/MoneyPrinterV2/venv/bin/python src/cron.py youtube <account-uuid>
+ExecStart=/home/ubuntu/AutoMuse/venv/bin/python src/cron.py youtube <account-uuid>
 Restart=on-failure
 RestartSec=300
 
@@ -438,9 +438,9 @@ WantedBy=multi-user.target
 Enable and start:
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable moneyprinter-youtube.service
-sudo systemctl start moneyprinter-youtube.service
-sudo systemctl status moneyprinter-youtube.service
+sudo systemctl enable automuse-youtube.service
+sudo systemctl start automuse-youtube.service
+sudo systemctl status automuse-youtube.service
 ```
 
 ---
@@ -450,14 +450,14 @@ sudo systemctl status moneyprinter-youtube.service
 ### Log Monitoring
 ```bash
 # Application logs
-tail -f /home/ubuntu/MoneyPrinterV2/logs/*.log  # If implemented
+tail -f /home/ubuntu/AutoMuse/logs/*.log  # If implemented
 
 # System logs
-journalctl -u moneyprinter-youtube.service -f
+journalctl -u automuse-youtube.service -f
 
 # Disk usage
 df -h
-du -sh /home/ubuntu/MoneyPrinterV2/.mp
+du -sh /home/ubuntu/AutoMuse/.mp
 ```
 
 ### Cleanup Cron Job
@@ -466,7 +466,7 @@ du -sh /home/ubuntu/MoneyPrinterV2/.mp
 crontab -e
 
 # Clean temporary files daily at 3 AM
-0 3 * * * cd /home/ubuntu/MoneyPrinterV2 && find .mp/temp -type f -mtime +1 -delete
+0 3 * * * cd /home/ubuntu/AutoMuse && find .mp/temp -type f -mtime +1 -delete
 ```
 
 ### Resource Monitoring
@@ -643,8 +643,8 @@ sudo apt install -y \
 
 # Clone repository
 cd ~
-git clone https://github.com/FujiwaraChoki/MoneyPrinterV2.git
-cd MoneyPrinterV2
+git clone https://github.com/FujiwaraChoki/AutoMuse.git
+cd AutoMuse
 
 # Setup Python environment
 python3.9 -m venv venv
