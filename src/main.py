@@ -17,6 +17,7 @@ from constants import *
 # Initialize logging framework
 from logger import setup_logger
 from scheduler_service import SchedulerService
+from setup_wizard import run_setup_wizard, run_startup_checks
 from status import *
 from utils import *
 from validation import validate_choice, validate_integer, validate_non_empty_string
@@ -338,16 +339,25 @@ if __name__ == "__main__":
 
     first_time = get_first_time_running()
 
-    if first_time:
-        print(
-            colored(
-                "Hey! It looks like you're running MoneyPrinter V2 for the first time. Let's get you setup first!",
-                "yellow",
-            )
-        )
-
     # Setup file tree
     assert_folder_structure()
+
+    if first_time:
+        # Run interactive setup wizard for first-time users
+        setup_ok = run_setup_wizard()
+        if not setup_ok:
+            response = input(
+                colored(
+                    "Continue anyway? Some features may not work. (Yes/No): ",
+                    "yellow",
+                )
+            ).strip()
+            if response.lower() not in ("yes", "y"):
+                print(colored("Exiting. Please complete setup and try again.", "cyan"))
+                sys.exit(0)
+    else:
+        # Run lightweight checks on subsequent runs
+        run_startup_checks()
 
     # Remove temporary files
     rem_temp_files()

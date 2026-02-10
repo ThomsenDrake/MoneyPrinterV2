@@ -9,7 +9,7 @@ import logging
 from typing import List, Optional, Tuple
 
 from config import (
-    get_assembly_ai_api_key,
+    get_assemblyai_api_key,
     get_mistral_api_key,
     get_venice_api_key,
 )
@@ -142,7 +142,7 @@ class HealthChecker:
             HealthCheckResult: Result of the health check
         """
         try:
-            api_key = get_assembly_ai_api_key()
+            api_key = get_assemblyai_api_key()
 
             if not api_key or api_key.strip() == "":
                 return HealthCheckResult(

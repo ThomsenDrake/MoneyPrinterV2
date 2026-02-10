@@ -1,10 +1,11 @@
-.PHONY: help install test lint format type-check quality clean all
+.PHONY: help install setup test lint format type-check quality clean all
 
 # Default target
 help:
 	@echo "MoneyPrinterV2 - Development Commands"
 	@echo ""
 	@echo "Available targets:"
+	@echo "  make setup        - Bootstrap new installation (copy configs, install deps)"
 	@echo "  make install      - Install all dependencies (including dev dependencies)"
 	@echo "  make test         - Run all tests with coverage"
 	@echo "  make test-unit    - Run only unit tests"
@@ -15,6 +16,19 @@ help:
 	@echo "  make quality      - Run all quality checks (lint + type-check + test)"
 	@echo "  make clean        - Remove build artifacts and cache files"
 	@echo "  make all          - Format code and run all quality checks"
+
+# Bootstrap a new installation
+setup: install
+	@echo "Setting up MoneyPrinterV2..."
+	@test -f .env || (cp .env.example .env && echo "Created .env from .env.example - please edit with your API keys")
+	@test -f config.json || (cp config.example.json config.json && echo "Created config.json from config.example.json")
+	@echo ""
+	@echo "Setup complete! Next steps:"
+	@echo "  1. Edit .env with your API keys (MISTRAL_API_KEY is required)"
+	@echo "  2. Edit config.json for your preferences"
+	@echo "  3. Run: python src/main.py"
+	@echo ""
+	@echo "See ENV_SETUP.md for detailed configuration instructions."
 
 # Install dependencies
 install:
